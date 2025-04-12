@@ -14,6 +14,9 @@ import MyAccount from './Pages/MyAccount';
 import ContactPage from './Pages/ContactPage';
 import DealsPage from './Pages/DealsPage';
 import AboutUs from './Pages/AboutUs';
+import AdminHotels from './Pages/AdminHotels';
+import ProtectedRoute from './components/ProtectedRoute';
+
 function HomePage() {
   return (
     <>
@@ -31,7 +34,6 @@ function App() {
     <Router>
       <NavBar />
       
-
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -41,11 +43,16 @@ function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/deals" element={<DealsPage />} />
         <Route path="/about" element={<AboutUs/>} />
-        
+        <Route 
+          path="/admin/hotels" 
+          element={
+            <ProtectedRoute isAdmin={true}>
+              <AdminHotels />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
       
-      
-
       <Footer />
     </Router>
   );
