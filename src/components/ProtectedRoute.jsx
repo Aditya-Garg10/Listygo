@@ -1,23 +1,50 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { isAuthenticated, getCurrentUser } from '../services/authService';
 
-const ProtectedRoute = ({ children, isAdmin }) => {
-  // Get authentication status from your authentication system
-  // This is a placeholder - replace with your actual auth logic
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  const userRole = localStorage.getItem('userRole');
+const ProtectedRoute = ({ children, isAdmin = false }) => {
+  const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const authStatus = isAuthenticated();
+      
+      if (!authStatus) {
+        setAuthorized(false);
+        setLoading(false);
+        return;
+      }
+      
+      // If this is an admin route, check if user has admin role
+      if (isAdmin) {
+        const user = getCurrentUser();
+        const hasAdminRole = user.role === 'admin' || user.role === 'super-admin';
+        setAuthorized(hasAdminRole);
+      } else {
+        setAuthorized(true);
+      }
+      
+      setLoading(false);
+    };
+    
+    checkAuth();
+  }, [isAdmin]);
   
-  if (!isAuthenticated) {
-    // Redirect to login if not authenticated
-    return <Navigate to="/login" />;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white pt-16">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
   
-  if (isAdmin && userRole !== 'admin') {
-    // Redirect to unauthorized page if admin access is required but user is not admin
-    return <Navigate to="/" />;
+  if (!authorized) {
+    // Redirect to login with the return URL
+    return <Navigate to={isAdmin ? "/admin/login" : "/login"} state={{ from: location }} replace />;
   }
   
-  // If authenticated and has required permissions, show the protected content
   return children;
 };
 
