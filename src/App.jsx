@@ -19,7 +19,7 @@ import AdminHotels from './Pages/AdminHotels';
 import ProtectedRoute from './components/ProtectedRoute';
 import HotelDetailsPage from './Pages/HotelDetailsPage';
 import HomePageHotelCard from './components/HomePageHotelCard';
-import AdminDashboard from './Components/AdminDashboard';
+import AdminDashboard from './components/AdminDashboard';
 import AdminListings from './Pages/AdminListings';
 import AdminCategories from './Pages/AdminCategories';
 import ListingsPage from './Pages/ListingsPage';
