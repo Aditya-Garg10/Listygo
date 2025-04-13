@@ -18,10 +18,10 @@ import {
 } from '@ant-design/icons';
 import { MdBed, MdBathroom, MdCarRental } from 'react-icons/md';
 import { FiMaximize2 } from 'react-icons/fi';
+import { API_URL } from '../utils/constants';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const HotelCard = () => {
   const [hotels, setHotels] = useState([]);
@@ -80,8 +80,8 @@ const HotelCard = () => {
   };
 
   return (
-    <div className="bg-[#f0f7ff] px-4 md:px-10 py-16">
-      <div className="max-w-7xl pt-10 mx-auto">
+    <div className="bg-[#f0f7ff] px-4 md:px-10 py-10">
+      <div className="max-w-7xl mx-auto">
         {/* Heading */}
         <Row gutter={[16, 16]} align="middle" className="mb-8">
           <Col xs={24} md={16}>
@@ -105,7 +105,7 @@ const HotelCard = () => {
         </Row>
 
         {/* Search and Filter Bar */}
-        <Card className="mb-6 shadow-sm">
+        <Card className="mb-6  shadow-sm">
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} md={16}>
               <Input
@@ -138,7 +138,7 @@ const HotelCard = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6">
+          <div className="mb-6 mt-5">
             <Alert
               message="Error"
               description={error}
@@ -151,7 +151,7 @@ const HotelCard = () => {
 
         {/* Hotel Grid */}
         {loading ? (
-          <Row gutter={[24, 24]}>
+          <Row className='mt-10' gutter={[24, 24]}>
             {[1, 2, 3, 4].map((item) => (
               <Col xs={24} lg={12} key={`skeleton-${item}`}>
                 <Card className="hover:shadow-md transition-shadow">

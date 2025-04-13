@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { FiPhoneCall, FiMail, FiMapPin, FiSend, FiUser, FiMessageSquare } from 'react-icons/fi';
 import { HiOutlineDocumentText } from 'react-icons/hi';
-// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { Card, Button, Form, Input, notification } from 'antd';
+import { Card, Button, Form, Input, notification, message } from 'antd';
 import Icon from '@ant-design/icons';
+import axios from 'axios';
+import { API_URL } from '../utils/constants'; // Adjust the import based on your project structure
 
 // Contact Info Card Component
 const ContactInfoCard = ({ title, content }) => (
@@ -81,20 +82,41 @@ const ContactPage = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      form.resetFields();
+    try {
+      // Get form data
+      const formData = form.getFieldsValue();
       
-      notification.success({
-        message: 'Message Sent',
-        description: 'Thank you for contacting us. We will get back to you shortly!',
+      // Make the actual API call
+      const response = await axios.post(`${API_URL}/users/contact-us`, formData);
+      
+      // Check if the request was successful
+      if (response.status === 200 ) {
+        // Reset form
+        form.resetFields();
+        
+        // Show success notification
+        message.success("Thank you for contacting us. We will get back to you shortly!")
+      } else {
+        // If API returns success: false
+        throw new Error(response.data.message || 'Failed to send message');
+      }
+    } catch (error) {
+      // Handle errors
+      console.error('Contact form submission error:', error);
+      
+      notification.error({
+        message: 'Message Failed',
+        description: error.response?.data?.message || 'Unable to send your message. Please try again later.',
         placement: 'top',
+        duration: 5, // Show for 5 seconds
       });
-    }, 1500);
+    } finally {
+      // Always disable loading state when done
+      setLoading(false);
+    }
   };
 
   return (

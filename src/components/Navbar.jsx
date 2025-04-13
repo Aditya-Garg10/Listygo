@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, LogOut, User, Bell, Search, ChevronDown } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -119,7 +118,7 @@ const Navbar = () => {
                 )}
               </Link>
               
-              <Link to="/deals" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/deals') ? 'text-blue-400 font-semibold' : ''}`}>
+              {/* <Link to="/deals" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/deals') ? 'text-blue-400 font-semibold' : ''}`}>
                 Deals
                 {isActive('/deals') && (
                   <motion.div 
@@ -127,7 +126,7 @@ const Navbar = () => {
                     layoutId="navbar-indicator"
                   />
                 )}
-              </Link>
+              </Link> */}
               
               <Link to="/about" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/about') ? 'text-blue-400 font-semibold' : ''}`}>
                 About Us

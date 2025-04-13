@@ -87,11 +87,11 @@ function App() {
             <ContactPage />
           </MainLayout>
         } />
-        <Route path="/deals" element={
+        {/* <Route path="/deals" element={
           <MainLayout>
             <DealsPage />
           </MainLayout>
-        } />
+        } /> */}
         <Route path="/about" element={
           <MainLayout>
             <AboutUs/>
