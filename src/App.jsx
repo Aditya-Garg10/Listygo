@@ -19,6 +19,7 @@ import AdminHotels from './Pages/AdminHotels';
 import ProtectedRoute from './components/ProtectedRoute';
 import HotelDetailsPage from './Pages/HotelDetailsPage';
 import HomePageHotelCard from './components/HomePageHotelCard';
+import AdminDashboard from './Components/AdminDashboard';
 
 function HomePage() {
   return (
@@ -107,6 +108,13 @@ function App() {
   <ProtectedRoute isAdmin={true}>
     <MainLayout>
       <AdminHotels />
+    </MainLayout>
+  </ProtectedRoute>
+} />
+        <Route path="/admin/dashboard" element={
+  <ProtectedRoute isAdmin={true}>
+    <MainLayout>
+      <AdminDashboard />
     </MainLayout>
   </ProtectedRoute>
 } />

@@ -28,7 +28,7 @@ const FooterSection = () => {
         whileInView={{ y: 0, opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.7 }}
-        className="bg-gradient-to-r  from-white to-blue-50 text-gray-800 rounded-2xl shadow-xl p-6 md:p-8 max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between -top-20 relative z-50"
+        className="bg-gradient-to-r  from-white to-blue-50 text-gray-800 rounded-2xl shadow-xl p-6 md:p-8 max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between -top-20 relative z-30"
       >
         <div className="mb-4  relative md:mb-0 md:mr-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-1">

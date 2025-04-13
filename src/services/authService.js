@@ -66,22 +66,28 @@ export const getCurrentUser = () => {
   };
 };
 
-// Get fresh user data from API
-export const fetchCurrentUser = async () => {
+// Fetch current logged-in user or admin based on a flag (you can set this flag after login)
+export const fetchCurrentUser = async (isAdmin = false) => {
+  const endpoint = isAdmin 
+    ? `${API_URL}/admin/me`        // admin endpoint
+    : `${API_URL}/users/me`;         // normal user endpoint
+  const response = await axios.get(endpoint);
+  return response.data.data;
+  // Note: Errors will naturally propagate to the caller
+};
+
+// Update user details (e.g. preferences, profile info, etc.)
+export const updateDetails = async (updateData) => {
   try {
-    const response = await axios.get(`${API_URL}/users/me`);
+    const response = await axios.put(`${API_URL}/users/updatedetails`, updateData);
     if (response.data.success) {
-      // Update local storage with current values
+      // Optionally update localStorage with new data
       localStorage.setItem('userName', response.data.data.name);
       localStorage.setItem('userEmail', response.data.data.email);
     }
-    return response.data.data;
+    return response.data;
   } catch (error) {
-    console.error('Error fetching current user:', error);
-    if (error.response && error.response.status === 401) {
-      // Clear auth data if token is invalid/expired
-      logoutUser();
-    }
+    console.error("Update user error: ", error);
     throw error;
   }
 };

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FiHome, FiDollarSign, FiStar, FiMapPin, FiImage, FiFileText, FiX, FiSave, FiPlus, FiTrash2 } from 'react-icons/fi';
-// eslint-disable-next-line no-unused-vars
+import { FiHome, FiDollarSign, FiStar, FiMapPin, FiImage, FiFileText, FiX, FiSave, FiPlus, FiTrash2, FiEdit } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -15,23 +14,38 @@ const AdminHotels = () => {
     price: '',
     rating: '',
     description: '',
-    images: [''] // Initialize with one empty image input
+    images: ['']
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [activeImagePreview, setActiveImagePreview] = useState(0);
   const [validationErrors, setValidationErrors] = useState({});
+  const [existingHotels, setExistingHotels] = useState([]);
+  // New state to track editing mode. If not null, we're editing a hotel with this ID.
+  const [editingHotelId, setEditingHotelId] = useState(null);
 
-  // Check authentication when component mounts
   useEffect(() => {
     const token = localStorage.getItem('token');
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     const userRole = localStorage.getItem('userRole');
-    
     if (!token || !isAuthenticated || (userRole !== 'admin' && userRole !== 'super-admin')) {
       navigate('/admin/login');
+    } else {
+      fetchHotels();
     }
   }, [navigate]);
+
+  const fetchHotels = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/hotels`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setExistingHotels(response.data.data);
+    } catch (error) {
+      console.error('Error fetching hotels:', error);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,36 +53,23 @@ const AdminHotels = () => {
       ...prevState,
       [name]: value
     }));
-    
-    // Clear validation error for this field
     if (validationErrors[name]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setValidationErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  // Handle changes to image URLs
   const handleImageChange = (index, value) => {
     const newImages = [...hotel.images];
     newImages[index] = value;
-    
     setHotel(prevState => ({
       ...prevState,
       images: newImages
     }));
-    
-    // Clear validation errors
     if (validationErrors.images) {
-      setValidationErrors(prev => ({
-        ...prev,
-        images: ''
-      }));
+      setValidationErrors(prev => ({ ...prev, images: '' }));
     }
   };
 
-  // Add a new image input field
   const addImageField = () => {
     setHotel(prevState => ({
       ...prevState,
@@ -76,23 +77,16 @@ const AdminHotels = () => {
     }));
   };
 
-  // Remove an image input field
   const removeImageField = (index) => {
     if (hotel.images.length <= 1) {
-      setValidationErrors(prev => ({
-        ...prev,
-        images: 'At least one image is required'
-      }));
+      setValidationErrors(prev => ({ ...prev, images: 'At least one image is required' }));
       return;
     }
-    
     const newImages = hotel.images.filter((_, i) => i !== index);
     setHotel(prevState => ({
       ...prevState,
       images: newImages
     }));
-    
-    // Adjust active preview if needed
     if (activeImagePreview >= newImages.length) {
       setActiveImagePreview(Math.max(0, newImages.length - 1));
     }
@@ -109,107 +103,116 @@ const AdminHotels = () => {
       errors.rating = 'Rating must be a number between 1 and 5';
     }
     if (!hotel.description) errors.description = 'Description is required';
-    
-    // Validate images
     const hasValidImage = hotel.images.some(img => img.trim() !== '');
     if (!hasValidImage) {
       errors.images = 'At least one valid image URL is required';
     }
-    
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Filter out empty image URLs
     const filteredImages = hotel.images.filter(img => img.trim() !== '');
-    const hotelData = {
-      ...hotel,
-      images: filteredImages
-    };
-    
-    // Validate the form
+    const hotelData = { ...hotel, images: filteredImages };
     if (!validateForm()) {
       setMessage({ type: 'error', text: 'Please fix the errors in the form' });
       return;
     }
-    
     setLoading(true);
     setMessage({ type: '', text: '' });
-    
     try {
-      // Get token from localStorage
       const token = localStorage.getItem('token');
-      
       if (!token) {
         setMessage({ type: 'error', text: 'You must be logged in as admin' });
         setLoading(false);
         navigate('/admin/login');
         return;
       }
-      
-      // Make API request
-      await axios.post(
-        `${API_URL}/hotels`, 
-        hotelData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+      if (editingHotelId) {
+        // Update existing hotel
+        await axios.put(
+          `${API_URL}/hotels/${editingHotelId}`,
+          hotelData,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
           }
-        }
-      );
-      
-      // Handle success
-      setMessage({ type: 'success', text: 'Hotel added successfully!' });
-      
-      // Clear form
-      setHotel({
-        name: '',
-        location: '',
-        price: '',
-        rating: '',
-        description: '',
-        images: ['']
-      });
-      setActiveImagePreview(0);
+        );
+        setMessage({ type: 'success', text: 'Hotel updated successfully!' });
+      } else {
+        // Create new hotel
+        await axios.post(
+          `${API_URL}/hotels`, 
+          hotelData,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+        setMessage({ type: 'success', text: 'Hotel added successfully!' });
+      }
+      handleClear();
+      fetchHotels(); 
     } catch (error) {
-      console.error('Error adding hotel:', error);
-      
-      // Handle different types of errors
+      console.error('Error adding/updating hotel:', error);
       if (error.response?.status === 401) {
         setMessage({ type: 'error', text: 'Authentication failed. Please login again.' });
         setTimeout(() => navigate('/admin/login'), 2000);
       } else if (error.response?.status === 400) {
-        setMessage({ 
-          type: 'error', 
-          text: error.response?.data?.error || 'Invalid data. Please check your inputs.' 
-        });
+        setMessage({ type: 'error', text: error.response?.data?.error || 'Invalid data. Please check your inputs.' });
       } else {
-        setMessage({ 
-          type: 'error', 
-          text: error.response?.data?.error || 'Error adding hotel. Please try again.' 
-        });
+        setMessage({ type: 'error', text: error.response?.data?.error || 'Error adding/updating hotel. Please try again.' });
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Clear the form
-  const handleClear = () => {
+  // Delete a hotel
+  const handleDelete = async (hotelId) => {
+    if (!window.confirm('Are you sure you want to delete this hotel?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/hotels/${hotelId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      setMessage({ type: 'success', text: 'Hotel deleted successfully!' });
+      fetchHotels();
+    } catch (error) {
+      console.error('Error deleting hotel:', error);
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Error deleting hotel' });
+    }
+  };
+
+  // Populate the form for editing hotel details
+  const handleEdit = (h) => {
+    setEditingHotelId(h._id);
     setHotel({
-      name: '',
-      location: '',
-      price: '',
-      rating: '',
-      description: '',
-      images: ['']
+      name: h.name,
+      location: h.location,
+      price: h.price,
+      rating: h.rating,
+      description: h.description,
+      images: h.images && h.images.length > 0 ? h.images : ['']
     });
     setActiveImagePreview(0);
     setValidationErrors({});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Clear the form and exit edit mode
+  const handleClear = () => {
+    setHotel({ name: '', location: '', price: '', rating: '', description: '', images: [''] });
+    setActiveImagePreview(0);
+    setValidationErrors({});
+    setEditingHotelId(null);
   };
 
   return (
@@ -256,8 +259,9 @@ const AdminHotels = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               className={`p-4 mb-6 rounded-lg shadow ${
-                message.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
-                'bg-red-100 text-red-800 border-l-4 border-red-500'
+                message.type === 'success' 
+                  ? 'bg-green-100 text-green-800 border-l-4 border-green-500' 
+                  : 'bg-red-100 text-red-800 border-l-4 border-red-500'
               }`}
             >
               {message.text}
@@ -265,8 +269,11 @@ const AdminHotels = () => {
           )}
         </AnimatePresence>
         
+        {/* Add/Edit Hotel Form */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800">Add New Hotel</h3>
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">
+            {editingHotelId ? 'Edit Hotel' : 'Add New Hotel'}
+          </h3>
           
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left Column - Basic Info */}
@@ -280,14 +287,10 @@ const AdminHotels = () => {
                   name="name"
                   value={hotel.name}
                   onChange={handleChange}
-                  className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${
-                    validationErrors.name ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${validationErrors.name ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Enter hotel name"
                 />
-                {validationErrors.name && (
-                  <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>
-                )}
+                {validationErrors.name && <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>}
               </div>
               
               <div>
@@ -299,14 +302,10 @@ const AdminHotels = () => {
                   name="location"
                   value={hotel.location}
                   onChange={handleChange}
-                  className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${
-                    validationErrors.location ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${validationErrors.location ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="City, Country"
                 />
-                {validationErrors.location && (
-                  <p className="text-red-500 text-sm mt-1">{validationErrors.location}</p>
-                )}
+                {validationErrors.location && <p className="text-red-500 text-sm mt-1">{validationErrors.location}</p>}
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -319,15 +318,11 @@ const AdminHotels = () => {
                     name="price"
                     value={hotel.price}
                     onChange={handleChange}
-                    className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${
-                      validationErrors.price ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${validationErrors.price ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="0.00"
                     min="0"
                   />
-                  {validationErrors.price && (
-                    <p className="text-red-500 text-sm mt-1">{validationErrors.price}</p>
-                  )}
+                  {validationErrors.price && <p className="text-red-500 text-sm mt-1">{validationErrors.price}</p>}
                 </div>
                 
                 <div>
@@ -342,14 +337,10 @@ const AdminHotels = () => {
                     step="0.1"
                     value={hotel.rating}
                     onChange={handleChange}
-                    className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${
-                      validationErrors.rating ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${validationErrors.rating ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="1-5"
                   />
-                  {validationErrors.rating && (
-                    <p className="text-red-500 text-sm mt-1">{validationErrors.rating}</p>
-                  )}
+                  {validationErrors.rating && <p className="text-red-500 text-sm mt-1">{validationErrors.rating}</p>}
                 </div>
               </div>
               
@@ -361,19 +352,15 @@ const AdminHotels = () => {
                   name="description"
                   value={hotel.description}
                   onChange={handleChange}
-                  className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${
-                    validationErrors.description ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${validationErrors.description ? 'border-red-500' : 'border-gray-300'}`}
                   rows="5"
                   placeholder="Describe the hotel and its amenities..."
                 />
-                {validationErrors.description && (
-                  <p className="text-red-500 text-sm mt-1">{validationErrors.description}</p>
-                )}
+                {validationErrors.description && <p className="text-red-500 text-sm mt-1">{validationErrors.description}</p>}
               </div>
             </div>
             
-            {/* Right Column - Multiple Images and Preview */}
+            {/* Right Column - Images and Preview */}
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -395,9 +382,7 @@ const AdminHotels = () => {
                       type="text"
                       value={image}
                       onChange={(e) => handleImageChange(index, e.target.value)}
-                      className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${
-                        validationErrors.images ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full p-3 border rounded-md focus:ring focus:ring-blue-300 focus:border-blue-500 outline-none transition ${validationErrors.images ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder={`Image URL ${index + 1}`}
                     />
                     <button
@@ -411,9 +396,7 @@ const AdminHotels = () => {
                   </div>
                 ))}
                 
-                {validationErrors.images && (
-                  <p className="text-red-500 text-sm mt-1">{validationErrors.images}</p>
-                )}
+                {validationErrors.images && <p className="text-red-500 text-sm mt-1">{validationErrors.images}</p>}
               </div>
               
               <div>
@@ -438,18 +421,13 @@ const AdminHotels = () => {
                   )}
                 </div>
                 
-                {/* Image thumbnail navigation - only show if there are multiple images */}
                 {hotel.images.length > 1 && (
                   <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
                     {hotel.images.map((img, index) => (
                       <div 
                         key={index}
                         onClick={() => setActiveImagePreview(index)}
-                        className={`cursor-pointer border-2 w-16 h-16 flex-shrink-0 ${
-                          activeImagePreview === index 
-                            ? 'border-blue-500' 
-                            : 'border-gray-200 hover:border-gray-400'
-                        }`}
+                        className={`cursor-pointer border-2 w-16 h-16 flex-shrink-0 ${activeImagePreview === index ? 'border-blue-500' : 'border-gray-200 hover:border-gray-400'}`}
                       >
                         {img ? (
                           <img 
@@ -480,15 +458,10 @@ const AdminHotels = () => {
                 >
                   <FiX /> Clear Form
                 </button>
-                
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-6 py-2 flex items-center gap-2 rounded-md shadow text-white transition ${
-                    loading 
-                      ? 'bg-blue-400 cursor-not-allowed' 
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
+                  className={`px-6 py-2 flex items-center gap-2 rounded-md shadow text-white transition ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                 >
                   {loading ? (
                     <>
@@ -497,7 +470,7 @@ const AdminHotels = () => {
                     </>
                   ) : (
                     <>
-                      <FiSave /> Save Hotel
+                      <FiSave /> {editingHotelId ? 'Update Hotel' : 'Save Hotel'}
                     </>
                   )}
                 </button>
@@ -506,7 +479,7 @@ const AdminHotels = () => {
           </form>
         </div>
         
-        {/* Future implementation: Display existing hotels in a table/grid */}
+        {/* Existing Hotels List */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold text-gray-800">Existing Hotels</h3>
@@ -514,10 +487,52 @@ const AdminHotels = () => {
               <FiPlus /> Add Filter
             </button>
           </div>
-          
-          <p className="text-gray-500 text-center py-8">
-            Hotel listing functionality coming soon...
-          </p>
+          {existingHotels.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {existingHotels.map((h) => (
+                <div key={h._id} className="p-4 border rounded-lg shadow-sm bg-gray-50 flex flex-col">
+                  <div className="flex items-center gap-4 mb-2">
+                    {h.images && h.images.length > 0 ? (
+                      <img src={h.images[0]} alt={h.name} className="w-16 h-16 object-cover rounded" onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/64?text=No+Image';
+                      }} />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 flex items-center justify-center text-gray-500">
+                        <FiHome size={24} />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-lg font-bold text-blue-800">{h.name}</p>
+                      <p className="text-sm text-gray-600">{h.location}</p>
+                    </div>
+                  </div>
+                  <div className="flex-grow">
+                    <p className="text-gray-700">{h.description.substring(0, 80)}...</p>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-blue-700 font-semibold">₹{h.price}</span>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleEdit(h)}
+                        className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-1"
+                      >
+                        <FiEdit /> Edit
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(h._id)}
+                        className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-1"
+                      >
+                        <FiTrash2 /> Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">No hotels available.</p>
+          )}
         </div>
       </div>
     </div>

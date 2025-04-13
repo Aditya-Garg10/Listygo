@@ -58,15 +58,28 @@ const Navbar = () => {
     }
   };
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const currentUser = getCurrentUser();
+      if (currentUser?.role === 'admin' || currentUser?.role === 'super-admin') {
+        setIsAdmin(true);
+      }
+    }
+  }, []);
+  
   // User dropdown menu items
   const userMenuItems = (
     <AntMenu>
       <AntMenu.Item key="1" icon={<User size={14} />}>
         <Link to="/account">My Profile</Link>
       </AntMenu.Item>
-      <AntMenu.Item key="2" icon={<Bell size={14} />}>
-        <Link to="/notifications">Notifications</Link>
-      </AntMenu.Item>
+      {isAdmin && (
+        <AntMenu.Item key="2" icon={<Bell size={14} />}>
+          <Link to="/admin/dashboard">Dashboard</Link>
+        </AntMenu.Item>
+      )}
       <AntMenu.Item key="3" icon={<LogOut size={14} />} danger onClick={handleLogout}>
         Log Out
       </AntMenu.Item>
@@ -80,13 +93,13 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 z-10">
             <img src={logo} alt="ListyGo Logo" className="h-10 w-auto" />
-            <span className="text-xl font-bold text-blue-600">ListyGo</span>
+            <span className="text-xl font-bold text-blue-400">ListyGo</span>
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
             <div className="flex items-center gap-6 text-sm font-medium text-gray-700">
-              <Link to="/" className={`transition duration-200 hover:text-blue-600 py-2 relative ${isActive('/') ? 'text-blue-600 font-semibold' : ''}`}>
+              <Link to="/" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/') ? 'text-blue-400 font-semibold' : ''}`}>
                 Home
                 {isActive('/') && (
                   <motion.div 
@@ -96,7 +109,7 @@ const Navbar = () => {
                 )}
               </Link>
               
-              <Link to="/hotels" className={`transition duration-200 hover:text-blue-600 py-2 relative ${isActive('/hotels') ? 'text-blue-600 font-semibold' : ''}`}>
+              <Link to="/hotels" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/hotels') ? 'text-blue-400 font-semibold' : ''}`}>
                 Hotels
                 {isActive('/hotels') && (
                   <motion.div 
@@ -106,7 +119,7 @@ const Navbar = () => {
                 )}
               </Link>
               
-              <Link to="/deals" className={`transition duration-200 hover:text-blue-600 py-2 relative ${isActive('/deals') ? 'text-blue-600 font-semibold' : ''}`}>
+              <Link to="/deals" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/deals') ? 'text-blue-400 font-semibold' : ''}`}>
                 Deals
                 {isActive('/deals') && (
                   <motion.div 
@@ -116,7 +129,7 @@ const Navbar = () => {
                 )}
               </Link>
               
-              <Link to="/about" className={`transition duration-200 hover:text-blue-600 py-2 relative ${isActive('/about') ? 'text-blue-600 font-semibold' : ''}`}>
+              <Link to="/about" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/about') ? 'text-blue-400 font-semibold' : ''}`}>
                 About Us
                 {isActive('/about') && (
                   <motion.div 
@@ -126,7 +139,7 @@ const Navbar = () => {
                 )}
               </Link>
               
-              <Link to="/contact" className={`transition duration-200 hover:text-blue-600 py-2 relative ${isActive('/contact') ? 'text-blue-600 font-semibold' : ''}`}>
+              <Link to="/contact" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/contact') ? 'text-blue-400 font-semibold' : ''}`}>
                 Contact Us
                 {isActive('/contact') && (
                   <motion.div 
@@ -138,22 +151,22 @@ const Navbar = () => {
             </div>
             
             {/* Search icon */}
-            <button 
+            {/* <button 
               onClick={() => setSearchVisible(!searchVisible)}
-              className="text-gray-500 hover:text-blue-600 transition-colors"
+              className="text-gray-500 hover:text-blue-400 transition-colors"
               aria-label="Search"
             >
               <Search size={18} />
-            </button>
+            </button> */}
             
             {userAuthenticated ? (
               <div className="flex items-center gap-4">
                 {/* Notifications */}
-                <Badge count={3} size="small">
-                  <Link to="/notifications" className="text-gray-500 hover:text-blue-600 transition-colors">
+                {/* <Badge count={3} size="small">
+                  <Link to="/notifications" className="text-gray-500 hover:text-blue-400 transition-colors">
                     <Bell size={18} />
                   </Link>
-                </Badge>
+                </Badge> */}
                 
                 {/* User Account Dropdown */}
                 <Dropdown 
@@ -184,7 +197,7 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Link to="/login" className="text-blue-600 border border-blue-500 px-4 py-1.5 rounded-full hover:bg-blue-50 transition-colors text-sm font-medium">
+                <Link to="/login" className="text-blue-400 border border-blue-500 px-4 py-1.5 rounded-full hover:bg-blue-50 transition-colors text-sm font-medium">
                   Log In
                 </Link>
                 <Link to="/register" className="bg-blue-600 text-white px-4 py-1.5 rounded-full hover:bg-blue-700 transition-colors text-sm font-medium">
@@ -198,14 +211,14 @@ const Navbar = () => {
           <div className="md:hidden flex items-center gap-4">
             <button 
               onClick={() => setSearchVisible(!searchVisible)}
-              className="text-gray-500 hover:text-blue-600 transition-colors"
+              className="text-gray-500 hover:text-blue-400 transition-colors"
             >
               <Search size={20} />
             </button>
             
             {userAuthenticated && (
               <Badge count={3} size="small">
-                <Link to="/notifications" className="text-gray-500 hover:text-blue-600 transition-colors">
+                <Link to="/notifications" className="text-gray-500 hover:text-blue-400 transition-colors">
                   <Bell size={20} />
                 </Link>
               </Badge>
@@ -213,7 +226,7 @@ const Navbar = () => {
             
             <button 
               onClick={toggleMenu}
-              className="text-gray-700 hover:text-blue-600 transition-colors"
+              className="text-gray-700 hover:text-blue-400 transition-colors"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -285,35 +298,35 @@ const Navbar = () => {
                 
                 <Link 
                   to="/" 
-                  className={`py-2 ${isActive('/') ? 'text-blue-600 font-semibold' : 'text-gray-700'}`} 
+                  className={`py-2 ${isActive('/') ? 'text-blue-400 font-semibold' : 'text-gray-700'}`} 
                   onClick={() => setMenuOpen(false)}
                 >
                   Home
                 </Link>
                 <Link 
                   to="/hotels" 
-                  className={`py-2 ${isActive('/hotels') ? 'text-blue-600 font-semibold' : 'text-gray-700'}`} 
+                  className={`py-2 ${isActive('/hotels') ? 'text-blue-400 font-semibold' : 'text-gray-700'}`} 
                   onClick={() => setMenuOpen(false)}
                 >
                   Hotels
                 </Link>
                 <Link 
                   to="/deals" 
-                  className={`py-2 ${isActive('/deals') ? 'text-blue-600 font-semibold' : 'text-gray-700'}`} 
+                  className={`py-2 ${isActive('/deals') ? 'text-blue-400 font-semibold' : 'text-gray-700'}`} 
                   onClick={() => setMenuOpen(false)}
                 >
                   Deals
                 </Link>
                 <Link 
                   to="/about" 
-                  className={`py-2 ${isActive('/about') ? 'text-blue-600 font-semibold' : 'text-gray-700'}`} 
+                  className={`py-2 ${isActive('/about') ? 'text-blue-400 font-semibold' : 'text-gray-700'}`} 
                   onClick={() => setMenuOpen(false)}
                 >
                   About Us
                 </Link>
                 <Link 
                   to="/contact" 
-                  className={`py-2 ${isActive('/contact') ? 'text-blue-600 font-semibold' : 'text-gray-700'}`} 
+                  className={`py-2 ${isActive('/contact') ? 'text-blue-400 font-semibold' : 'text-gray-700'}`} 
                   onClick={() => setMenuOpen(false)}
                 >
                   Contact Us
@@ -350,7 +363,7 @@ const Navbar = () => {
                   <div className="flex flex-col gap-3 mt-3">
                     <Link 
                       to="/login" 
-                      className="text-blue-600 border border-blue-500 px-4 py-2 rounded-full hover:bg-blue-50 text-center"
+                      className="text-blue-400 border border-blue-500 px-4 py-2 rounded-full hover:bg-blue-50 text-center"
                       onClick={() => setMenuOpen(false)}
                     >
                       Log In

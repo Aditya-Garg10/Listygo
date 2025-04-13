@@ -12,6 +12,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { isAuthenticated, logoutUser, getCurrentUser, fetchCurrentUser } from '../services/authService';
 import { Progress, Avatar, Button, Badge, Tooltip, Tabs, Tag, Card } from 'antd';
+import PersonalInfo from '../Components/PersonalInfo';
+import Settings from '../Components/Settings';
 
 const MyAccount = () => {
   const [activeSection, setActiveSection] = useState('personal');
@@ -64,12 +66,14 @@ const MyAccount = () => {
       }
       
       try {
-        // Get user data from API
-        const userData = await fetchCurrentUser();
-        setUserData(userData);
-        
-        // Set mock bookings
-        setBookings(mockBookings);
+        // If logged in as admin, call fetchCurrentUser(true)
+        const isAdmin = localStorage.getItem('userRole') === 'admin' || localStorage.getItem('userRole') === 'super-admin';
+        const fetchedData = await fetchCurrentUser(isAdmin);
+        setUserData(fetchedData);        
+        if (Array.isArray(fetchedData.bookings)) {
+          setBookings(fetchedData.bookings);
+        }
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching user data:', err);
         if (err.response?.status === 401) {
@@ -81,7 +85,6 @@ const MyAccount = () => {
         } else {
           setError('Failed to load account information. Please try again later.');
         }
-      } finally {
         setLoading(false);
       }
     };
@@ -182,185 +185,12 @@ const MyAccount = () => {
   // Define dynamic content sections
   const sections = {
     personal: (
-      <motion.div
-        key="personal"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.4 }}
-        className="space-y-6"
-      >
-        {/* Profile Summary Card */}
-        <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl shadow-md">
-          <div className="flex flex-col md:flex-row md:items-center justify-between">
-            <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4 md:mb-0">
-              <div className="relative">
-                {user.avatar ? (
-                  <Avatar 
-                    src={user.avatar} 
-                    size={80} 
-                    className="border-4 border-blue-100"
-                  />
-                ) : (
-                  <Avatar 
-                    size={80} 
-                    className="bg-blue-500 border-4 border-blue-100"
-                  >
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                  </Avatar>
-                )}
-                <div className="absolute bottom-0 right-0">
-                  <Tooltip title="Upload Photo">
-                    <Button 
-                      type="primary" 
-                      shape="circle" 
-                      size="small" 
-                      icon={<FiEdit size={12} />} 
-                      className="bg-blue-600 shadow-md"
-                    />
-                  </Tooltip>
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">{user.name}</h3>
-                <div className="text-gray-500 flex items-center gap-2 mt-1">
-                  <FiMail className="text-blue-500" size={14} />
-                  {user.email}
-                </div>
-                {user.phone && (
-                  <div className="text-gray-500 flex items-center gap-2 mt-1">
-                    <FiPhone className="text-blue-500" size={14} />
-                    {user.phone}
-                  </div>
-                )}
-                <div className="text-gray-500 flex items-center gap-2 mt-1">
-                  <FiCalendar className="text-blue-500" size={14} />
-                  Member since {new Date(user.memberSince || '2024-01-01').toLocaleDateString()}
-                </div>
-              </div>
-            </div>
-            
-            <Button 
-              type="default"
-              icon={<FiEdit size={14} />}
-              className="border-blue-500 text-blue-600 hover:text-blue-700"
-            >
-              Edit Profile
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="text-sm font-semibold text-gray-700">Profile Completion</h4>
-                <span className="text-sm font-medium text-blue-600">{user.profileCompleted || 65}%</span>
-              </div>
-              <Progress 
-                percent={user.profileCompleted || 65} 
-                showInfo={false} 
-                strokeColor="#3b82f6"
-                trailColor="#e0e7ff"
-              />
-              <div className="mt-2 text-xs text-gray-500">
-                Complete your profile to unlock more features
-              </div>
-            </div>
-            
-            <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-gray-700">Reward Points</h4>
-                <div className="text-2xl font-bold text-blue-600 mt-1">
-                  {user.rewardPoints || 750}
-                </div>
-                <div className="text-xs text-gray-500">150 points until next reward</div>
-              </div>
-              <div>
-                <div className="bg-blue-600 text-white text-xs font-medium py-1 px-2 rounded-full">
-                  {user.tier || 'Silver'} Member
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-gray-700">Saved Properties</h4>
-                <div className="text-2xl font-bold text-blue-600 mt-1">
-                  {user.favoriteHotels || 5}
-                </div>
-                <div className="text-xs text-gray-500">Properties on your wishlist</div>
-              </div>
-              <div>
-                <Button 
-                  type="default" 
-                  shape="circle" 
-                  icon={<FiHeart size={16} className="text-red-500" />}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Account Preferences</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <FiBell className="text-blue-500" size={18} />
-                  <span className="text-sm">Email Notifications</span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" value="" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-              
-              <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <FiShield className="text-blue-500" size={18} />
-                  <span className="text-sm">Two-Factor Authentication</span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" value="" className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Verification Status */}
-        <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Verification Status</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center justify-between border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center gap-3">
-                <FiMail className="text-green-500" size={18} />
-                <span className="text-sm font-medium">Email</span>
-              </div>
-              <Tag color="success">Verified</Tag>
-            </div>
-            
-            <div className="flex items-center justify-between border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center gap-3">
-                <FiPhone className="text-red-500" size={18} />
-                <span className="text-sm font-medium">Phone</span>
-              </div>
-              <Tag color="error">Not Verified</Tag>
-            </div>
-            
-            <div className="flex items-center justify-between border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center gap-3">
-                <FiCreditCard className="text-gray-500" size={18} />
-                <span className="text-sm font-medium">ID Verification</span>
-              </div>
-              <Tag color="default">Not Started</Tag>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
+      <PersonalInfo 
+        user={user} 
+        containerVariants={containerVariants}
+        itemVariants={itemVariants} 
+      />
     ),
-    
     bookings: (
       <motion.div
         key="bookings"
@@ -662,151 +492,11 @@ const MyAccount = () => {
     ),
     
     settings: (
-      <motion.div
-        key="settings"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.4 }}
-        className="space-y-6"
-      >
-        <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-lg font-bold text-gray-800 mb-6">Account Settings</h3>
-          
-          <div className="space-y-6">
-            <div className="border-b border-gray-200 pb-6">
-              <h4 className="font-medium text-gray-800 mb-4">Email Preferences</h4>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Booking Confirmations</div>
-                    <div className="text-sm text-gray-500">Receive emails when you make a reservation</div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" value="" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Promotions and Deals</div>
-                    <div className="text-sm text-gray-500">Stay updated with special offers and discounts</div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" value="" className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Travel Tips</div>
-                    <div className="text-sm text-gray-500">Destination guides and travel advice</div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" value="" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-              </div>
-            </div>
-            
-            <div className="border-b border-gray-200 pb-6">
-              <h4 className="font-medium text-gray-800 mb-4">Privacy Settings</h4>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Two-Factor Authentication</div>
-                    <div className="text-sm text-gray-500">Add an extra layer of security to your account</div>
-                  </div>
-                  <Button 
-                    type="primary" 
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    Enable 2FA
-                  </Button>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Data Sharing</div>
-                    <div className="text-sm text-gray-500">Allow us to use your data for personalized recommendations</div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" value="" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-gray-800 mb-4">Account Management</h4>
-              <div className="space-y-4">
-                <Button type="default" block icon={<FiEdit size={14} />}>
-                  Change Password
-                </Button>
-                <Button danger block icon={<AiOutlineLogout size={14} />}>
-                  Delete Account
-                </Button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-        
-        <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold text-gray-800">Notification Settings</h3>
-            <Button type="default">Reset to Default</Button>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-3">
-                <FiBell className="text-blue-500" size={20} />
-                <div>
-                  <div className="font-medium">Push Notifications</div>
-                  <div className="text-sm text-gray-500">Alerts on your mobile device</div>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" value="" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-            
-            <div className="flex justify-between items-center border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-3">
-                <FiBook className="text-blue-500" size={20} />
-                <div>
-                  <div className="font-medium">Booking Reminders</div>
-                  <div className="text-sm text-gray-500">Reminders about upcoming stays</div>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" value="" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <FiHelpCircle className="text-blue-500" size={20} />
-                <div>
-                  <div className="font-medium">Account Alerts</div>
-                  <div className="text-sm text-gray-500">Security and account-related notifications</div>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" value="" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
+      <Settings 
+        user={user}
+        containerVariants={containerVariants}
+        itemVariants={itemVariants} 
+      />
     ),
   };
 
