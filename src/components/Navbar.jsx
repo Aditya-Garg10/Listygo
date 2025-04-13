@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, LogOut, User, Bell, Search, ChevronDown } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import logo from '../assets/logo.png';
+
 import { isAuthenticated, logoutUser, getCurrentUser } from '../services/authService';
 import { Badge, Avatar, Input, Dropdown, Menu as AntMenu, Button } from 'antd';
 
@@ -92,7 +92,7 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 z-10">
-            <img src={logo} alt="ListyGo Logo" className="h-10 w-auto" />
+            <img src="/Logo.png" alt="ListyGo Logo" className="h-10 w-auto" />
             <span className="text-xl font-bold text-blue-400">ListyGo</span>
           </Link>
 
