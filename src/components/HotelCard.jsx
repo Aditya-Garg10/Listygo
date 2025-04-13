@@ -233,54 +233,56 @@ const HotelCard = () => {
                           <Divider className="my-3" />
                           
                           <Row gutter={[16, 12]}>
-                            {hotel.bedrooms && (
-                              <Col span={12}>
-                                <Space>
-                                  <Avatar size="small" className="bg-blue-100 text-blue-700 flex items-center justify-center">
-                                    <MdBed />
-                                  </Avatar>
-                                  <Text className="text-gray-700">
-                                    {hotel.bedrooms} Bed{hotel.bedrooms > 1 ? 's' : ''}
-                                  </Text>
-                                </Space>
-                              </Col>
-                            )}
-                            
-                            {hotel.bathrooms && (
-                              <Col span={12}>
-                                <Space>
-                                  <Avatar size="small" className="bg-blue-100 text-blue-700 flex items-center justify-center">
-                                    <MdBathroom />
-                                  </Avatar>
-                                  <Text className="text-gray-700">
-                                    {hotel.bathrooms} Bath{hotel.bathrooms > 1 ? 's' : ''}
-                                  </Text>
-                                </Space>
-                              </Col>
-                            )}
-                            
-                            {hotel.size && (
-                              <Col span={12}>
-                                <Space>
-                                  <Avatar size="small" className="bg-blue-100 text-blue-700 flex items-center justify-center">
-                                    <FiMaximize2 />
-                                  </Avatar>
-                                  <Text className="text-gray-700">{hotel.size} sq ft</Text>
-                                </Space>
-                              </Col>
-                            )}
-                            
-                            {hotel.parking && (
-                              <Col span={12}>
-                                <Space>
-                                  <Avatar size="small" className="bg-blue-100 text-blue-700 flex items-center justify-center">
-                                    <MdCarRental />
-                                  </Avatar>
-                                  <Text className="text-gray-700">Parking</Text>
-                                </Space>
-                              </Col>
-                            )}
-                          </Row>
+  {hotel.bedrooms && (
+    <Col span={12}>
+      <Space>
+        <Avatar size="small" className="bg-blue-100 text-blue-700 flex items-center justify-center">
+          <MdBed />
+        </Avatar>
+        <Text className="text-gray-700">
+          {hotel.bedrooms} Bed{hotel.bedrooms > 1 ? 's' : ''}
+        </Text>
+      </Space>
+    </Col>
+  )}
+  
+  {hotel.bathrooms && (
+    <Col span={12}>
+      <Space>
+        <Avatar size="small" className="bg-blue-100 text-blue-700 flex items-center justify-center">
+          <MdBathroom />
+        </Avatar>
+        <Text className="text-gray-700">
+          {hotel.bathrooms} Bath{hotel.bathrooms > 1 ? 's' : ''}
+        </Text>
+      </Space>
+    </Col>
+  )}
+  
+  {hotel.size && (
+    <Col span={12}>
+      <Space>
+        <Avatar size="small" className="bg-blue-100 text-blue-700 flex items-center justify-center">
+          <FiMaximize2 />
+        </Avatar>
+        <Text className="text-gray-700">{hotel.size} sq ft</Text>
+      </Space>
+    </Col>
+  )}
+  
+  {hotel.parking !== undefined && (
+    <Col span={12}>
+      <Space>
+        <Avatar size="small" className="bg-blue-100 text-blue-700 flex items-center justify-center">
+          <MdCarRental />
+        </Avatar>
+        <Text className="text-gray-700">
+          {hotel.parking ? 'Parking Available' : 'No Parking'}
+        </Text>
+      </Space>
+    </Col>
+  )}
+</Row>
                           
                           <Divider className="my-3" />
                           

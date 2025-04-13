@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
@@ -14,9 +14,10 @@ import {
   CarOutlined, 
   TeamOutlined,
   InfoCircleOutlined,
-  FullscreenOutlined
+  FullscreenOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
-import { MdBed, MdBathtub } from 'react-icons/md';
+import { MdBed, MdBathtub, MdWifi, MdAcUnit, MdTv, MdKitchen, MdPool, MdFitnessCenter } from 'react-icons/md';
 import dayjs from 'dayjs';
 
 const { Title, Text, Paragraph } = Typography;
@@ -31,6 +32,7 @@ const HotelDetailsPage = () => {
   const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [form] = Form.useForm();
+  const carouselRef = useRef(null);
 
   useEffect(() => {
     const fetchHotel = async () => {
@@ -105,6 +107,33 @@ const HotelDetailsPage = () => {
 
   const images = getImages();
 
+  const handleThumbnailClick = (index) => {
+    setActiveImage(index);
+    if (carouselRef.current) {
+      carouselRef.current.goTo(index);
+    }
+  };
+
+  const getAmenityIcon = (amenity) => {
+    const iconProps = { size: 18 };
+    switch (amenity.toLowerCase()) {
+      case 'wifi':
+        return <MdWifi {...iconProps} />;
+      case 'air conditioning':
+        return <MdAcUnit {...iconProps} />;
+      case 'tv':
+        return <MdTv {...iconProps} />;
+      case 'kitchen':
+        return <MdKitchen {...iconProps} />;
+      case 'pool':
+        return <MdPool {...iconProps} />;
+      case 'gym':
+        return <MdFitnessCenter {...iconProps} />;
+      default:
+        return <CheckCircleOutlined />;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen pt-20">
@@ -129,12 +158,12 @@ const HotelDetailsPage = () => {
   }
 
   return (
-    <div className="bg-[#f0f7ff]  min-h-screen pt-24 pb-12 px-4">
+    <div className="bg-[#f0f7ff] pb-20  min-h-screen pt-10 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb and Header */}
         <Row gutter={[16, 16]} className="mb-4">
           <Col span={24}>
-            <Breadcrumb className="py-4">
+            <Breadcrumb className="">
               <Breadcrumb.Item>
                 <a onClick={() => navigate('/')}>
                   <HomeOutlined /> Home
@@ -177,6 +206,7 @@ const HotelDetailsPage = () => {
                   dots={true}
                   afterChange={(current) => setActiveImage(current)}
                   className="hotel-carousel"
+                  ref={carouselRef}
                 >
                   {images.length > 0 ? (
                     images.map((image, index) => (
@@ -219,7 +249,7 @@ const HotelDetailsPage = () => {
                         className={`cursor-pointer rounded-md overflow-hidden h-16 border-2 ${
                           activeImage === index ? 'border-blue-500' : 'border-transparent'
                         }`}
-                        onClick={() => setActiveImage(index)}
+                        onClick={() => handleThumbnailClick(index)}
                       >
                         <img
                           src={img}
@@ -308,22 +338,52 @@ const HotelDetailsPage = () => {
               </Paragraph>
               
               {/* Amenities Section */}
-              <Divider orientation="left">Amenities</Divider>
-              <Row gutter={[16, 16]}>
-                {['WiFi', 'Air Conditioning', 'TV', 'Kitchen', 'Pool', 'Gym'].map((amenity) => (
-                  <Col key={amenity} xs={12} md={8}>
-                    <Tag color="blue" className="py-1 px-3 text-sm">
-                      {amenity}
-                    </Tag>
-                  </Col>
-                ))}
-              </Row>
+              <Divider orientation="left">
+  <Space>
+    <CheckCircleOutlined />
+    <span>Amenities</span>
+  </Space>
+</Divider>
+
+<Row gutter={[16, 16]} className="pb-2">
+  {hotel.amenities && hotel.amenities.length > 0 ? (
+    hotel.amenities.map((amenity) => (
+      <Col key={amenity} xs={12} md={8} lg={6}>
+        <div className="bg-blue-50 hover:bg-blue-100 transition-colors rounded-lg p-3 h-full">
+          <Space align="start">
+            <div className="bg-white rounded-full p-2 shadow-sm text-blue-600">
+              {getAmenityIcon(amenity)}
+            </div>
+            <Text className="text-gray-700 font-medium">
+              {amenity}
+            </Text>
+          </Space>
+        </div>
+      </Col>
+    ))
+  ) : (
+    ['WiFi', 'Air Conditioning', 'TV', 'Kitchen', 'Pool', 'Gym'].map((amenity) => (
+      <Col key={amenity} xs={12} md={8} lg={6}>
+        <div className="bg-blue-50 hover:bg-blue-100 transition-colors rounded-lg p-3 h-full">
+          <Space align="start">
+            <div className="bg-white rounded-full p-2 shadow-sm text-blue-600">
+              {getAmenityIcon(amenity)}
+            </div>
+            <Text className="text-gray-700 font-medium">
+              {amenity}
+            </Text>
+          </Space>
+        </div>
+      </Col>
+    ))
+  )}
+</Row>
             </Card>
           </Col>
           
           {/* Booking Card */}
           <Col xs={24} xl={8}>
-            <div className="sticky top-24">
+            <div className="sticky space-y-2 top-24">
               <Badge.Ribbon 
                 text={`$${hotel.price}/night`}
                 color="blue"
@@ -441,17 +501,38 @@ const HotelDetailsPage = () => {
               {/* Contact Host Card */}
               <Card bordered={false} className="shadow-md rounded-lg mt-4">
                 <Space className="flex items-center">
-                  <Avatar size={48} src="https://randomuser.me/api/portraits/men/32.jpg" />
+                  <Avatar 
+                    size={48} 
+                    src={hotel.host?.image || "https://randomuser.me/api/portraits/men/32.jpg"}
+                  />
                   <div>
-                    <Text strong>John Host</Text>
+                    <Text strong>{hotel.host?.name || "John Host"}</Text>
                     <div>
-                      <Text type="secondary" className="text-sm">Superhost</Text>
-                      <span className="mx-1">·</span>
-                      <Text type="secondary" className="text-sm">Response rate: 99%</Text>
+                      {hotel.host?.isSuperhost && (
+                        <>
+                          <Text type="secondary" className="text-sm">Superhost</Text>
+                          <span className="mx-1">·</span>
+                        </>
+                      )}
+                      <Text type="secondary" className="text-sm">
+                        Response rate: {hotel.host?.responseRate || 99}%
+                      </Text>
                     </div>
                   </div>
                 </Space>
-                <Button type="default" block className="mt-4">
+                <Button 
+                  type="default" 
+                  block 
+                  className="mt-4"
+                  onClick={() => {
+                    if (hotel.host?.phone) {
+                      window.location.href = `tel:${hotel.host.phone}`;
+                      message.info(`Calling host at ${hotel.host.phone}`);
+                    } else {
+                      message.info('Contact information not available');
+                    }
+                  }}
+                >
                   Contact Host
                 </Button>
               </Card>

@@ -51,7 +51,7 @@ const Header = () => {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
-          className="w-full max-w-4xl"
+          className="w-full border border-gray-200/[0.5] rounded-2xl max-w-4xl"
         >
           <Card className="shadow-xl bg-white/95 backdrop-blur-md" bordered={false}>
             <form onSubmit={(e) => e.preventDefault()}>
@@ -118,13 +118,13 @@ const Header = () => {
         >
           <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg">
             <div className="flex items-center gap-2">
-              <StarFilled className="text-yellow-400" />
+              <StarFilled style={{color : "#51a2ff"}} className="text-blue-400 " />
               <span className="text-black font-medium">4.9/5 ratings</span>
             </div>
           </div>
           <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg">
             <div className="flex items-center gap-2">
-              <TeamOutlined className="text-white" />
+              <TeamOutlined style={{color : "#51a2ff"}} className="text-white" />
               <span className="text-black font-medium">1M+ happy customers</span>
             </div>
           </div>

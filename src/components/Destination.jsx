@@ -121,7 +121,7 @@ const Destinations = () => {
 
   return (
     <section className="w-full py-20 px-4 md:px-10 bg-gradient-to-b from-white to-blue-50">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl pb-16 mx-auto">
         {/* Section Header with Enhanced Animations */}
         <motion.div 
           initial="hidden"
@@ -261,7 +261,7 @@ const Destinations = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute mt-2 bg-white shadow-xl rounded-lg p-4 z-20 max-w-xs"
+                    className="absolute mt-2 bg-white shadow-xl rounded-lg p-4  z-30 max-w-xs"
                     style={{ width: 'calc(100% - 10px)' }}
                   >
                     <div className="text-sm text-gray-700">{dest.longDescription}</div>
@@ -286,14 +286,14 @@ const Destinations = () => {
           transition={{ delay: 0.6, duration: 0.6 }}
           className="text-center mt-12"
         >
-          <Button 
+          {/* <Button 
             type="primary" 
             size="large"
-            className="bg-blue-600 hover:bg-blue-700 px-8"
+            className="bg-blue-600 z-0  hover:bg-blue-700 px-8"
             onClick={() => navigate('/hotels')}
           >
             View All Destinations
-          </Button>
+          </Button> */}
         </motion.div>
       </div>
     </section>

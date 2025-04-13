@@ -232,11 +232,11 @@ const AboutUs = () => {
               <motion.div variants={fadeInUp} className="flex flex-col md:flex-row gap-8 items-center">
                 <div className="md:w-1/2">
                   <div className="relative">
-                    <div className="absolute -inset-4 bg-blue-100 rounded-lg transform -rotate-6 z-0"></div>
+                    <div className="absolute  -inset-4 bg-blue-100 rounded-lg transform -rotate-6 z-0"></div>
                     <img 
-                      src="https://images.unsplash.com/photo-1593697972696-2c714a9f040d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" 
+                      src="/top-photo.svg"
                       alt="Company founding" 
-                      className="rounded-lg relative z-10 shadow-lg"
+                      className="rounded-lg ms-16 -rotate-6 h-[300px]  relative z-10 shadow-lg"
                     />
                   </div>
                 </div>
@@ -448,9 +448,9 @@ const AboutUs = () => {
                   <div className="flex flex-col md:flex-row gap-8">
                     <div className="md:w-1/2">
                       <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/e/e4/India_map_blank.svg" 
+                        src="https://i.pinimg.com/736x/90/98/d8/9098d87fa95cba68939dc0bdb650383e.jpg" 
                         alt="Map of India" 
-                        className="w-full h-auto max-h-96"
+                        className="w-full object-contain h-auto max-h-96"
                       />
                     </div>
                     <div className="md:w-1/2">
