@@ -120,7 +120,7 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-blue-50 via-white to-blue-50 pt-24 pb-16 px-4">
+    <div className="min-h-screen mt-5 bg-gradient-to-tr from-blue-50 via-white to-blue-50 pt-24 pb-16 px-4">
       {/* Page Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
