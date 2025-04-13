@@ -33,9 +33,7 @@ app.use(cookieParser());
 
 // Enable CORS
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? "https://listygo-fe.vercel.app" 
-    : 'http://localhost:5173',
+  origin: "https://listygo-fe.vercel.app",
   credentials: true
 }));
 
