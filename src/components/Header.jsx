@@ -17,32 +17,21 @@ const Header = () => {
   };
 
   return (
-    <section className="relative h-[85vh] md:h-[80vh] overflow-hidden">
-      {/* Background Video */}
-      <div className="absolute inset-0 w-full h-full">
-        <video
-          autoPlay
-          muted
-          loop
-          className="w-full h-full object-cover brightness-[0.65]"
-        >
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-shot-of-a-city-on-a-cloudy-day-41376-large.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      </div>
+    <section className="relative min-h-[100vh] md:min-h-[90vh] overflow-hidden">
+    
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto h-full flex flex-col items-center justify-center text-center px-4 md:px-8">
+      <div className="relative z-10 md:mt-20 max-w-7xl mx-auto h-full flex flex-col items-center justify-center text-center px-4 md:px-8 py-16 md:py-0">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="text-white mb-8"
+          className="text-white mb-6 md:mb-8"
         >
-          <h1 className="text-4xl text-black sm:text-5xl md:text-6xl font-bold mb-4">
+          <h1 className="text-3xl text-black sm:text-5xl md:text-6xl font-bold mb-3 md:mb-4">
             Find Your Perfect <span className="text-blue-400">Getaway</span>
           </h1>
-          <p className="text-lg sm:text-xl max-w-2xl mx-auto opacity-90">
+          <p className="text-base sm:text-xl text-gray-500 font-normal max-w-2xl mx-auto opacity-90">
             Discover amazing places to stay around the world at exceptional prices
           </p>
         </motion.div>
@@ -73,6 +62,7 @@ const Header = () => {
                       size="large"
                       className="w-full"
                       placeholder={['Check-in', 'Check-out']}
+                      inputReadOnly
                     />
                   </div>
                 </Col>
@@ -98,7 +88,7 @@ const Header = () => {
                       type="primary" 
                       size="large"
                       onClick={handleSearch}
-                      className="w-full bg-blue-600 hover:bg-blue-700 mt-md-0 mt-0 sm:mt-7"
+                      className="w-full bg-blue-600 hover:bg-blue-700 mt-0 md:mt-7"
                     >
                       <SearchOutlined />
                     </Button>
@@ -114,18 +104,18 @@ const Header = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.6 }}
-          className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex gap-4 sm:gap-8"
+          className="hidden sm:flex  absolute bottom-16 sm:-bottom-40 left-1/2 transform -translate-x-1/2 gap-3 sm:gap-8 flex-wrap justify-center"
         >
-          <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg">
+          <div className="bg-white/20 backdrop-blur-md px-3 sm:px-4 py-2 rounded-lg">
             <div className="flex items-center gap-2">
-              <StarFilled style={{color : "#51a2ff"}} className="text-blue-400 " />
-              <span className="text-black font-medium">4.9/5 ratings</span>
+              <StarFilled style={{color : "#51a2ff"}} className="text-blue-400" />
+              <span className="text-black text-sm sm:text-base font-medium">4.9/5 ratings</span>
             </div>
           </div>
-          <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg">
+          <div className="bg-white/20 backdrop-blur-md px-3 sm:px-4 py-2 rounded-lg">
             <div className="flex items-center gap-2">
-              <TeamOutlined style={{color : "#51a2ff"}} className="text-white" />
-              <span className="text-black font-medium">1M+ happy customers</span>
+              <TeamOutlined style={{color : "#51a2ff"}} />
+              <span className="text-black text-sm sm:text-base font-medium">1M+ happy customers</span>
             </div>
           </div>
         </motion.div>
@@ -133,8 +123,14 @@ const Header = () => {
 
       {/* Wave Divider */}
       <div className="absolute bottom-0 left-0 w-full">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" className="fill-white">
-          <path d="M0,64L48,80C96,96,192,128,288,122.7C384,117,480,75,576,64C672,53,768,75,864,80C960,85,1056,75,1152,69.3C1248,64,1344,64,1392,64L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 1440 120"
+          className="fill-white w-full"
+          preserveAspectRatio="none"
+          style={{ display: 'block', height: '70px' }}
+        >
+          <path d="M0,80 C240,120 480,40 720,80 C960,120 1200,40 1440,80 L1440,320 L0,320 Z"></path>
         </svg>
       </div>
     </section>
