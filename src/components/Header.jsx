@@ -17,34 +17,22 @@ const Header = () => {
   };
 
   return (
-    <section className="relative h-[54vh] md:h-[80vh] overflow-hidden">
-      {/* Background Video */}
-      <div className="absolute inset-0 w-full h-full">
-        <video
-          autoPlay
-          muted
-          loop
-          className="w-full h-full object-cover brightness-[0.65]"
-        >
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-shot-of-a-city-on-a-cloudy-day-41376-large.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      </div>
+    <section className="relative min-h-[100vh] md:min-h-[90vh] overflow-hidden">
+    
 
-      {/* Main Content Area (Text + Search Bar) */}
-      {/* Adjusted padding and flex properties for better centering and spacing */}
-      <div className="relative z-10 max-w-7xl mx-auto flex-grow flex flex-col items-center justify-center text-center px-4 md:px-8 pt-16 pb-4 sm:pb-6 md:pb-8"> {/* Added flex-grow, adjusted padding */}
+      {/* Content */}
+      <div className="relative z-10 md:mt-20 max-w-7xl mx-auto h-full flex flex-col items-center justify-center text-center px-4 md:px-8 py-16 md:py-0">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="text-white mb-6 md:mb-8" // Adjusted margin
+          className="text-white mb-6 md:mb-8"
         >
-          <h1 className="text-4xl text-black sm:text-5xl md:text-6xl font-bold mb-4">
-        Find Your Perfect <span className="text-blue-400">Getaway</span>
+          <h1 className="text-3xl text-black sm:text-5xl md:text-6xl font-bold mb-3 md:mb-4">
+            Find Your Perfect <span className="text-blue-400">Getaway</span>
           </h1>
-          <p className="text-lg sm:text-xl max-w-2xl mx-auto opacity-90">
-        Discover amazing places to stay around the world at exceptional prices
+          <p className="text-base sm:text-xl text-gray-500 font-normal max-w-2xl mx-auto opacity-90">
+            Discover amazing places to stay around the world at exceptional prices
           </p>
         </motion.div>
 
@@ -52,92 +40,97 @@ const Header = () => {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
-          className="w-full border border-gray-200/[0.5] rounded-2xl max-w-4xl mb-6 sm:mb-8" // Added margin bottom
+          className="w-full border border-gray-200/[0.5] rounded-2xl max-w-4xl"
         >
           <Card className="shadow-xl bg-white/95 backdrop-blur-md" bordered={false}>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <Row gutter={[16, 16]} align="bottom"> {/* Added align="bottom" */}
-            <Col xs={24} md={24} lg={9}>
-          <div className="mb-0">
-            <Text strong className="block mb-2 text-left">Where to?</Text> {/* Added text-left */}
-            <Input
-              size="large"
-              placeholder="Search destinations"
-              prefix={<SearchOutlined className="text-gray-400" />}
-            />
-          </div>
-            </Col>
-            <Col xs={24} md={12} lg={9}>
-          <div className="mb-0">
-            <Text strong className="block mb-2 text-left">When?</Text> {/* Added text-left */}
-            <RangePicker
-              size="large"
-              className="w-full"
-              placeholder={['Check-in', 'Check-out']}
-            />
-          </div>
-            </Col>
-            <Col xs={24} md={12} lg={4}>
-          <div className="mb-0">
-            <Text strong className="block mb-2 text-left">Guests</Text> {/* Added text-left */}
-            <Select
-              size="large"
-              defaultValue="2"
-              className="w-full"
-            >
-              <Option value="1">1 Guest</Option>
-              <Option value="2">2 Guests</Option>
-              <Option value="3">3 Guests</Option>
-              <Option value="4">4 Guests</Option>
-              <Option value="5">5+ Guests</Option>
-            </Select>
-          </div>
-            </Col>
-            <Col xs={24} lg={2}>
-          {/* Button column now aligns with others due to Row align="bottom" */}
-          <div className="mb-0 h-full flex items-end">
-            <Button
-              type="primary"
-              size="large"
-              onClick={handleSearch}
-              className="w-full bg-blue-600 hover:bg-blue-700" // Removed specific mt classes
-            >
-              <SearchOutlined />
-            </Button>
-          </div>
-            </Col>
-          </Row>
-        </form>
+            <form onSubmit={(e) => e.preventDefault()}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} md={24} lg={9}>
+                  <div className="mb-0">
+                    <Text strong className="block mb-2">Where to?</Text>
+                    <Input 
+                      size="large"
+                      placeholder="Search destinations" 
+                      prefix={<SearchOutlined className="text-gray-400" />}
+                    />
+                  </div>
+                </Col>
+                <Col xs={24} md={12} lg={9}>
+                  <div className="mb-0">
+                    <Text strong className="block mb-2">When?</Text>
+                    <RangePicker
+                      size="large"
+                      className="w-full"
+                      placeholder={['Check-in', 'Check-out']}
+                      inputReadOnly
+                    />
+                  </div>
+                </Col>
+                <Col xs={24} md={12} lg={4}>
+                  <div className="mb-0">
+                    <Text strong className="block mb-2">Guests</Text>
+                    <Select
+                      size="large"
+                      defaultValue="2"
+                      className="w-full"
+                    >
+                      <Option value="1">1 Guest</Option>
+                      <Option value="2">2 Guests</Option>
+                      <Option value="3">3 Guests</Option>
+                      <Option value="4">4 Guests</Option>
+                      <Option value="5">5+ Guests</Option>
+                    </Select>
+                  </div>
+                </Col>
+                <Col xs={24} lg={2}>
+                  <div className="mb-0 h-full flex items-end">
+                    <Button 
+                      type="primary" 
+                      size="large"
+                      onClick={handleSearch}
+                      className="w-full bg-blue-600 hover:bg-blue-700 mt-0 md:mt-7"
+                    >
+                      <SearchOutlined />
+                    </Button>
+                  </div>
+                </Col>
+              </Row>
+            </form>
           </Card>
         </motion.div>
 
-        {/* Floating Stats - Positioned below search bar */}
+        {/* Floating Stats */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.6 }}
-          // Uses normal flow, centered, with responsive gap and padding
-          className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 w-full px-4 pb-4 sm:pb-6 md:pb-8"
+          className="hidden sm:flex  absolute bottom-16 sm:-bottom-40 left-1/2 transform -translate-x-1/2 gap-3 sm:gap-8 flex-wrap justify-center"
         >
-          <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg">
-        <div className="flex items-center gap-2 bg-gradient-to-b from-blue-300 via-blue-100 to-transparent text-white rounded-lg px-2 py-1">
-          <StarFilled style={{ color: "#51a2ff" }} className="text-blue-400 text-sm sm:text-base" />
-          <span className="text-black font-medium text-xl sm:text-sm">4.9/5 ratings</span>
-        </div>
+          <div className="bg-white/20 backdrop-blur-md px-3 sm:px-4 py-2 rounded-lg">
+            <div className="flex items-center gap-2">
+              <StarFilled style={{color : "#51a2ff"}} className="text-blue-400" />
+              <span className="text-black text-sm sm:text-base font-medium">4.9/5 ratings</span>
+            </div>
           </div>
-          <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg">
-        <div className="flex items-center gap-2 bg-gradient-to-b from-blue-300 via-blue-100 to-transparent text-white rounded-lg px-2 py-1">
-          <TeamOutlined style={{ color: "#51a2ff" }} className="text-blue-400 text-sm sm:text-base" />
-          <span className="text-black font-medium text-xl sm:text-sm">1M+ happy customers</span>
-        </div>
+          <div className="bg-white/20 backdrop-blur-md px-3 sm:px-4 py-2 rounded-lg">
+            <div className="flex items-center gap-2">
+              <TeamOutlined style={{color : "#51a2ff"}} />
+              <span className="text-black text-sm sm:text-base font-medium">1M+ happy customers</span>
+            </div>
           </div>
         </motion.div>
       </div>
 
       {/* Wave Divider */}
       <div className="absolute bottom-0 left-0 w-full">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" className="fill-white">
-          <path d="M0,64L48,80C96,96,192,128,288,122.7C384,117,480,75,576,64C672,53,768,75,864,80C960,85,1056,75,1152,69.3C1248,64,1344,64,1392,64L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 1440 120"
+          className="fill-white w-full"
+          preserveAspectRatio="none"
+          style={{ display: 'block', height: '70px' }}
+        >
+          <path d="M0,80 C240,120 480,40 720,80 C960,120 1200,40 1440,80 L1440,320 L0,320 Z"></path>
         </svg>
       </div>
     </section>
