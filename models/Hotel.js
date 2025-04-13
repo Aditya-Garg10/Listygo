@@ -44,6 +44,58 @@ const HotelSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  bedrooms: {
+    type: Number,
+    default: 1
+  },
+  bathrooms: {
+    type: Number,
+    default: 1
+  },
+  size: {
+    type: Number,
+    default: null
+  },
+  parking: {
+    type: Boolean,
+    default: false
+  },
+  maxGuests: {
+    type: Number,
+    default: 2
+  },
+  // Adding amenities field
+  amenities: {
+    type: [String],
+    default: ['WiFi', 'Air Conditioning']
+  },
+  // Adding host information
+  host: {
+    name: {
+      type: String,
+      default: 'Host'
+    },
+    image: {
+      type: String,
+      default: 'https://randomuser.me/api/portraits/men/32.jpg'
+    },
+    isSuperhost: {
+      type: Boolean,
+      default: false
+    },
+    responseRate: {
+      type: Number,
+      default: 95
+    },
+    phone: {
+      type: String,
+      default: ''
+    },
+    email: {
+      type: String,
+      default: ''
+    }
   }
 });
 
