@@ -30,9 +30,14 @@ mongoose
 app.use(express.json());
 app.use(cookieParser());
 
+// // Enable CORS
+// app.use(cors({
+//   origin: "https://listygo-fe.vercel.app" || 'http://localhost:5173',
+//   credentials: true
+// }));
 // Enable CORS
 app.use(cors({
-  origin: "https://listygo-fe.vercel.app" || 'http://localhost:5173',
+  origin: 'http://localhost:5173',
   credentials: true
 }));
 
@@ -45,6 +50,7 @@ app.get('/', (req, res) => {
 app.use('/api/admin', adminRoutes);
 app.use('/api/hotels', hotelRoutes);
 app.use('/api/users', userRoutes);
+
 
 // Error handling middleware (should be last)
 app.use(errorHandler);

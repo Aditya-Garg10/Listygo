@@ -11,7 +11,8 @@ const {
   getPaymentMethods,
   addPaymentMethod,
   setDefaultPaymentMethod,
-  deletePaymentMethod
+  deletePaymentMethod,
+  contactUsHandler
 } = require('../controllers/users');
 
 const router = express.Router();
@@ -34,5 +35,8 @@ router.get('/payment-methods', protect, getPaymentMethods);
 router.post('/payment-methods', protect, addPaymentMethod);
 router.put('/payment-methods/:methodId/default', protect, setDefaultPaymentMethod);
 router.delete('/payment-methods/:methodId', protect, deletePaymentMethod);
+
+// Contact Us route
+router.post('/contact-us', contactUsHandler);
 
 module.exports = router;

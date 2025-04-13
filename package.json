@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
     "build": "echo \"Building project\" && npm install"
-  },  
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -19,6 +19,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
+    "nodemailer": "^6.10.1",
     "nodemon": "^3.1.9"
   }
 }

@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const asyncHandler = require('../middleware/async');
 const ErrorResponse = require('../utils/errorResponse');
+const nodemailer = require('nodemailer');
 
 // Utility function to send token response
 const sendTokenResponse = (user, statusCode, res) => {
@@ -306,4 +307,98 @@ exports.deletePaymentMethod = asyncHandler(async (req, res, next) => {
     success: true,
     data: user.paymentMethods
   });
+});
+
+
+// @desc    Handle contact form submissions
+// @route   POST /api/users/contact
+// @access  Public
+exports.contactUsHandler = asyncHandler(async (req, res, next) => {
+  try {
+    const { name, email, subject, message } = req.body;
+    
+    // Validate input
+    if (!name || !email || !subject || !message) {
+      return next(new ErrorResponse('Please provide name, email, subject and message', 400));
+    }
+    
+    // Setup email transporter
+    const transporter = nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
+    
+    // 1. Store contact request in database (optional)
+    // const contactRequest = await ContactRequest.create({
+    //   name,
+    //   email,
+    //   subject,
+    //   message,
+    //   status: 'new'
+    // });
+    
+    // 2. Send confirmation email to user
+    const userMailOptions = {
+      from: process.env.EMAIL_FROM || 'support@listygo.com',
+      to: email,
+      subject: 'Thank you for contacting ListyGo',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #3b82f6; padding: 20px; text-align: center;">
+            <h2 style="color: white; margin: 0;">ListyGo</h2>
+          </div>
+          <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none;">
+            <p>Dear ${name},</p>
+            <p>Thank you for reaching out to us. We have received your message regarding "${subject}".</p>
+            <p>Our team will review your inquiry and get back to you as soon as possible, typically within 24-48 hours.</p>
+            <p>For urgent matters, please call our customer service at +91-800-000-0000.</p>
+            <p>Best regards,</p>
+            <p>The ListyGo Team</p>
+          </div>
+          <div style="background-color: #f3f4f6; padding: 15px; font-size: 12px; text-align: center; color: #6b7280;">
+            <p>© ${new Date().getFullYear()} ListyGo. All rights reserved.</p>
+            <p>Please do not reply to this email as it was sent from an unmonitored address.</p>
+          </div>
+        </div>
+      `
+    };
+    
+    // 3. Send notification email to admin (optional)
+    const adminMailOptions = {
+      from: process.env.EMAIL_FROM || 'support@listygo.com',
+      to: process.env.ADMIN_EMAIL || 'admin@listygo.com',
+      subject: `New Contact Form: ${subject}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>New Contact Form Submission</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <p><strong>Message:</strong></p>
+          <p style="background-color: #f9fafb; padding: 15px; border-left: 4px solid #3b82f6;">${message}</p>
+        </div>
+      `
+    };
+    
+    // Send emails asynchronously
+    await transporter.sendMail(userMailOptions);
+    
+    // Optional: send notification to admin
+    if (process.env.ADMIN_EMAIL) {
+      await transporter.sendMail(adminMailOptions);
+    }
+    
+    // Return success response
+    res.status(200).json({
+      success: true,
+      message: 'Your message has been received. We will contact you soon.'
+    });
+    
+  } catch (error) {
+    console.error('Contact form error:', error);
+    return next(new ErrorResponse('Unable to send message at this time. Please try again later.', 500));
+  }
 });
