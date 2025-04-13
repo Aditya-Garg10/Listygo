@@ -11,6 +11,7 @@ const Navbar = () => {
   const [userAuthenticated, setUserAuthenticated] = useState(false);
   const [userData, setUserData] = useState(null);
   const [searchVisible, setSearchVisible] = useState(false);
+  const [categories, setCategories] = useState([]); // State for categories
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -67,6 +68,16 @@ const Navbar = () => {
       }
     }
   }, []);
+
+  // // Fetch categories (mocked for now)
+  // useEffect(() => {
+  //   // Replace with actual API call to fetch categories
+  //   setCategories([
+  //     { _id: '1', name: 'Category 1' },
+  //     { _id: '2', name: 'Category 2' },
+  //     { _id: '3', name: 'Category 3' },
+  //   ]);
+  // }, []);
   
   // User dropdown menu items
   const userMenuItems = (
@@ -107,26 +118,35 @@ const Navbar = () => {
                   />
                 )}
               </Link>
+                            
               
-              <Link to="/hotels" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/hotels') ? 'text-blue-400 font-semibold' : ''}`}>
-                Hotels
-                {isActive('/hotels') && (
+              <Link to="/listings" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/listings') ? 'text-blue-400 font-semibold' : ''}`}>
+                All Listings
+                {isActive('/listings') && (
                   <motion.div 
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"
                     layoutId="navbar-indicator"
                   />
                 )}
               </Link>
-              
-              {/* <Link to="/deals" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/deals') ? 'text-blue-400 font-semibold' : ''}`}>
-                Deals
-                {isActive('/deals') && (
-                  <motion.div 
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"
-                    layoutId="navbar-indicator"
-                  />
-                )}
-              </Link> */}
+{/* 
+              <Dropdown
+                overlay={
+                  <AntMenu>
+                    {categories.map(category => (
+                      <AntMenu.Item key={category._id}>
+                        <Link to={`/listings?category=${category._id}`}>
+                          {category.name}
+                        </Link>
+                      </AntMenu.Item>
+                    ))}
+                  </AntMenu>
+                }
+              >
+                <Link to="/listings" className="transition duration-200 hover:text-blue-400 py-2 relative">
+                  Categories <ChevronDown size={16} />
+                </Link>
+              </Dropdown> */}
               
               <Link to="/about" className={`transition duration-200 hover:text-blue-400 py-2 relative ${isActive('/about') ? 'text-blue-400 font-semibold' : ''}`}>
                 About Us
@@ -149,25 +169,8 @@ const Navbar = () => {
               </Link>
             </div>
             
-            {/* Search icon */}
-            {/* <button 
-              onClick={() => setSearchVisible(!searchVisible)}
-              className="text-gray-500 hover:text-blue-400 transition-colors"
-              aria-label="Search"
-            >
-              <Search size={18} />
-            </button> */}
-            
             {userAuthenticated ? (
               <div className="flex items-center gap-4">
-                {/* Notifications */}
-                {/* <Badge count={3} size="small">
-                  <Link to="/notifications" className="text-gray-500 hover:text-blue-400 transition-colors">
-                    <Bell size={18} />
-                  </Link>
-                </Badge> */}
-                
-                {/* User Account Dropdown */}
                 <Dropdown 
                   overlay={userMenuItems} 
                   placement="bottomRight" 
@@ -310,11 +313,11 @@ const Navbar = () => {
                   Hotels
                 </Link>
                 <Link 
-                  to="/deals" 
-                  className={`py-2 ${isActive('/deals') ? 'text-blue-400 font-semibold' : 'text-gray-700'}`} 
+                  to="/listings" 
+                  className={`py-2 ${isActive('/listings') ? 'text-blue-400 font-semibold' : 'text-gray-700'}`} 
                   onClick={() => setMenuOpen(false)}
                 >
-                  Deals
+                  All Listings
                 </Link>
                 <Link 
                   to="/about" 

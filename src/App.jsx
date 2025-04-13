@@ -19,7 +19,11 @@ import AdminHotels from './Pages/AdminHotels';
 import ProtectedRoute from './components/ProtectedRoute';
 import HotelDetailsPage from './Pages/HotelDetailsPage';
 import HomePageHotelCard from './components/HomePageHotelCard';
-import AdminDashboard from './components/AdminDashboard';
+import AdminDashboard from './Components/AdminDashboard';
+import AdminListings from './Pages/AdminListings';
+import AdminCategories from './Pages/AdminCategories';
+import ListingsPage from './Pages/ListingsPage';
+import ListingDetailsPage from './Pages/ListingDetailsPage';
 
 function HomePage() {
   return (
@@ -65,33 +69,38 @@ function App() {
             <LoginPage />
           </MainLayout>
         } />
-       <Route path="/account" element={
-  <ProtectedRoute>
-    <MainLayout>
-      <MyAccount />
-    </MainLayout>
-  </ProtectedRoute>
-} />
+        <Route path="/account" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <MyAccount />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
         <Route path="/hotels" element={
           <MainLayout>
             <HotelCard />
           </MainLayout>
         } />
         <Route path="/hotels/:id" element={
-  <MainLayout>
-    <HotelDetailsPage />
-  </MainLayout>
-} />
+          <MainLayout>
+            <HotelDetailsPage />
+          </MainLayout>
+        } />
+        <Route path="/listings" element={
+          <MainLayout>
+            <ListingsPage />
+          </MainLayout>
+        } />
+        <Route path="/listings/:id" element={
+          <MainLayout>
+            <ListingDetailsPage />
+          </MainLayout>
+        } />
         <Route path="/contact" element={
           <MainLayout>
             <ContactPage />
           </MainLayout>
         } />
-        {/* <Route path="/deals" element={
-          <MainLayout>
-            <DealsPage />
-          </MainLayout>
-        } /> */}
         <Route path="/about" element={
           <MainLayout>
             <AboutUs/>
@@ -105,19 +114,29 @@ function App() {
           </CleanLayout>
         } />
         <Route path="/admin/hotels" element={
-  <ProtectedRoute isAdmin={true}>
-    <MainLayout>
-      <AdminHotels />
-    </MainLayout>
-  </ProtectedRoute>
-} />
+          <ProtectedRoute isAdmin={true}>
+            <MainLayout>
+              <AdminHotels />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
         <Route path="/admin/dashboard" element={
-  <ProtectedRoute isAdmin={true}>
-    <MainLayout>
-      <AdminDashboard />
-    </MainLayout>
-  </ProtectedRoute>
-} />
+          <ProtectedRoute isAdmin={true}>
+            <MainLayout>
+              <AdminDashboard />
+            </MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/listings" element={
+          <ProtectedRoute isAdmin={true}>
+            <AdminListings />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/categories" element={
+          <ProtectedRoute isAdmin={true}>
+            <AdminCategories />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Router>
   );
