@@ -1,4 +1,6 @@
 const Admin = require('../models/Admin');
+const User = require('../models/User');
+const Hotel = require('../models/Hotel'); // In case you want to include hotel stats in the future
 const asyncHandler = require('../middleware/async');
 const ErrorResponse = require('../utils/errorResponse');
 
@@ -109,6 +111,41 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
   await admin.save();
 
   sendTokenResponse(admin, 200, res);
+});
+
+// @desc    Get dashboard data for admin
+// @route   GET /api/v1/admin/dashboard
+// @access  Private
+exports.getDashboardData = asyncHandler(async (req, res, next) => {
+  // Total users from the User collection
+  const totalUsers = await User.countDocuments();
+
+  // Total hotels: count documents in the Hotel collection
+  const totalHotels = await Hotel.countDocuments();
+
+  // Active sessions - using a real session store is ideal.
+  // For now, we return 0.
+  const activeSessions = 0;
+
+  // Recent users: last 5 registered users, selecting key fields
+  const recentUsers = await User.find()
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .select('name email role createdAt');
+
+  // Recent hotels: list last 5 hotels from the Hotel collection
+  const recentHotels = await Hotel.find()        
+
+  res.status(200).json({
+    success: true,
+    data: {
+      totalUsers,
+      totalHotels,
+      activeSessions,
+      recentUsers,
+      recentHotels
+    }
+  });
 });
 
 // Helper function to get token from model, create cookie and send response
