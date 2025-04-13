@@ -12,8 +12,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { isAuthenticated, logoutUser, getCurrentUser, fetchCurrentUser } from '../services/authService';
 import { Progress, Avatar, Button, Badge, Tooltip, Tabs, Tag, Card } from 'antd';
-import PersonalInfo from '../Components/PersonalInfo';
-import Settings from '../Components/Settings';
+import PersonalInfo from '../components/PersonalInfo';
+import Settings from '../components/Settings';
 
 const MyAccount = () => {
   const [activeSection, setActiveSection] = useState('personal');
