@@ -5,7 +5,8 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const errorHandler = require('./middleware/error');
 const adminRoutes = require('./routes/admin');
-const hotelRoutes = require('./routes/hotels');
+const listingsRoutes = require('./routes/listings');
+const categoriesRoutes = require('./routes/categories');
 const userRoutes = require('./routes/users');
 
 // Load env vars
@@ -32,25 +33,22 @@ app.use(cookieParser());
 
 // Enable CORS
 app.use(cors({
-  origin: "https://listygo-fe.vercel.app" || 'http://localhost:5173',
+  origin: process.env.NODE_ENV === 'production' 
+    ? "https://listygo-fe.vercel.app" 
+    : 'http://localhost:5173',
   credentials: true
 }));
-// Enable CORS
-// app.use(cors({
-//   origin: 'http://localhost:5173',
-//   credentials: true
-// }));
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('Listygo API - Welcome to our API service');
+  res.send('ListyGo API - Welcome to our listing service');
 });
 
 // Mount routers
 app.use('/api/admin', adminRoutes);
-app.use('/api/hotels', hotelRoutes);
+app.use('/api/listings', listingsRoutes);
+app.use('/api/categories', categoriesRoutes);
 app.use('/api/users', userRoutes);
-
 
 // Error handling middleware (should be last)
 app.use(errorHandler);
