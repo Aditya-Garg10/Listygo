@@ -30,16 +30,16 @@ mongoose
 app.use(express.json());
 app.use(cookieParser());
 
-// // Enable CORS
-// app.use(cors({
-//   origin: "https://listygo-fe.vercel.app" || 'http://localhost:5173',
-//   credentials: true
-// }));
 // Enable CORS
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: "https://listygo-fe.vercel.app" || 'http://localhost:5173',
   credentials: true
 }));
+// Enable CORS
+// app.use(cors({
+//   origin: 'http://localhost:5173',
+//   credentials: true
+// }));
 
 // Routes
 app.get('/', (req, res) => {
