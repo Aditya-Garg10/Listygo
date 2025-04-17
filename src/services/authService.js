@@ -20,10 +20,14 @@ axios.interceptors.request.use(
 );
 
 // Register user
-export const registerUser = async (userData) => {
-  const response = await axios.post(`${API_URL}/users/register`, userData);
-  if (response.data.success) {
-    storeUserData(response.data);
+export const registerUser = async (userData, endpoint = '/api/register') => {
+  const response = await axios.post(`${API_URL}${endpoint}`, userData);
+  if (response.data.token) {
+    localStorage.setItem('token', response.data.token);
+    localStorage.setItem('userRole', userData.role);
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userName', userData.name);
+    localStorage.setItem('userEmail', userData.email);
   }
   return response.data;
 };
