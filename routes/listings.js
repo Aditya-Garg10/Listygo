@@ -13,7 +13,7 @@ const {
 
 router.route('/')
   .get(getListings)
-  .post(protect, authorize('super-admin'), createListing);
+  .post(protect, authorize('admin'), createListing);
 
 router.route('/featured')
   .get(getFeaturedListings);
@@ -23,7 +23,7 @@ router.route('/category/:categoryId')
 
 router.route('/:id')
   .get(getListing)
-  .put(protect, authorize('super-admin'), updateListing)
-  .delete(protect, authorize('super-admin'), deleteListing);
+  .put(protect, authorize('admin'), updateListing)
+  .delete(protect, authorize('admin'), deleteListing);
 
 module.exports = router;
