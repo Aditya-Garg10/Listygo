@@ -11,11 +11,11 @@ const {
 
 router.route('/')
   .get(getCategories)
-  .post(protect, authorize('super-admin'), createCategory);
+  .post(protect, authorize('admin'), createCategory);
 
 router.route('/:id')
   .get(getCategory)
-  .put(protect, authorize('super-admin'), updateCategory)
-  .delete(protect, authorize('super-admin'), deleteCategory);
+  .put(protect, authorize('admin'), updateCategory)
+  .delete(protect, authorize('admin'), deleteCategory);
 
 module.exports = router;
