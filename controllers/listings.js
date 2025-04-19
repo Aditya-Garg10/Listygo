@@ -7,6 +7,8 @@ const ErrorResponse = require('../utils/errorResponse');
 // @route   GET /api/listings
 // @access  Public
 exports.getListings = asyncHandler(async (req, res, next) => {
+  console.log("💡 createListing called", req.body); // ✅ Add this
+
   // Copy req.query
   const reqQuery = { ...req.query };
 
@@ -196,32 +198,24 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
 // @desc    Delete listing
 // @route   DELETE /api/listings/:id
 // @access  Private
+// @desc    Delete listing
+// @route   DELETE /api/listings/:id
+// @access  Private
 exports.deleteListing = asyncHandler(async (req, res, next) => {
-  const listing = await Listing.findById(req.params.id);
+  const deleted = await Listing.findByIdAndDelete(req.params.id);
 
-  if (!listing) {
+  if (!deleted) {
     return next(
       new ErrorResponse(`Listing not found with id of ${req.params.id}`, 404)
     );
   }
-
-  // Make sure user is listing owner or admin
-  if (listing.addedBy.toString() !== req.user.id && req.user.role !== 'admin') {
-    return next(
-      new ErrorResponse(
-        `User ${req.user.id} is not authorized to delete this listing`,
-        401
-      )
-    );
-  }
-
-  await listing.remove();
 
   res.status(200).json({
     success: true,
     data: {}
   });
 });
+
 
 // @desc    Get listings by category
 // @route   GET /api/listings/category/:categoryId

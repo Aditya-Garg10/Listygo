@@ -11,9 +11,13 @@ const {
   getFeaturedListings
 } = require('../controllers/listings');
 
+
+
+// after
 router.route('/')
   .get(getListings)
-  .post(protect, authorize('admin'), createListing);
+  .post(protect, authorize('admin', 'super-admin'), createListing);
+
 
 router.route('/featured')
   .get(getFeaturedListings);
@@ -23,7 +27,7 @@ router.route('/category/:categoryId')
 
 router.route('/:id')
   .get(getListing)
-  .put(protect, authorize('admin'), updateListing)
-  .delete(protect, authorize('admin'), deleteListing);
+  .put(protect, authorize('admin', 'super-admin'), updateListing)
+  .delete(protect, authorize('admin', 'super-admin'), deleteListing);
 
 module.exports = router;
