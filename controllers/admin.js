@@ -2,7 +2,10 @@ const Admin = require('../models/Admin');
 const User = require('../models/User');
 const Hotel = require('../models/Hotel'); // In case you want to include hotel stats in the future
 const asyncHandler = require('../middleware/async');
+const asyncHandler = require('../middleware/async');
 const ErrorResponse = require('../utils/errorResponse');
+const User    = require('../models/User');
+const Listing = require('../models/Listing');
 
 // @desc    Register admin
 // @route   POST /api/v1/admin/register
@@ -117,36 +120,36 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/admin/dashboard
 // @access  Private
 exports.getDashboardData = asyncHandler(async (req, res, next) => {
-  // Total users from the User collection
-  const totalUsers = await User.countDocuments();
+  // 1) Total counts
+  const totalUsers    = await User.countDocuments();
+  const totalListings = await Listing.countDocuments();
 
-  // Total hotels: count documents in the Hotel collection
-  const totalHotels = await Hotel.countDocuments();
-
-  // Active sessions - using a real session store is ideal.
-  // For now, we return 0.
-  const activeSessions = 0;
-
-  // Recent users: last 5 registered users, selecting key fields
+  // 2) Most recent 5 users
   const recentUsers = await User.find()
     .sort({ createdAt: -1 })
     .limit(5)
-    .select('name email role createdAt');
+    .select('name email createdAt');
 
-  // Recent hotels: list last 5 hotels from the Hotel collection
-  const recentHotels = await Hotel.find()        
+  // 3) Most recent 5 listings
+  const recentListings = await Listing.find()
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .populate('category', 'name')  // bring in category name
+    .select('name images category location price rating createdAt');
 
+  // 4) Return everything in `data` so your frontend’s fetchAdminData()
+  //    can do `response.data.data.recentListings`
   res.status(200).json({
     success: true,
     data: {
       totalUsers,
-      totalHotels,
-      activeSessions,
+      totalListings,
       recentUsers,
-      recentHotels
+      recentListings
     }
   });
 });
+
 
 // Helper function to get token from model, create cookie and send response
 const sendTokenResponse = (admin, statusCode, res) => {
