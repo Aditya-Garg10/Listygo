@@ -2,6 +2,10 @@ const Listing = require('../models/Listing');
 const Category = require('../models/Category');
 const asyncHandler = require('../middleware/async');
 const ErrorResponse = require('../utils/errorResponse');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const admin = require('../config/firebase');
 
 // @desc    Get all listings
 // @route   GET /api/listings
@@ -129,25 +133,105 @@ exports.getListing = asyncHandler(async (req, res, next) => {
 // @route   POST /api/listings
 // @access  Private
 exports.createListing = asyncHandler(async (req, res, next) => {
-  // Add user to req.body
-  req.body.addedBy = req.user.id;
-
-  // Check if category exists
-  if (req.body.category) {
-    const category = await Category.findById(req.body.category);
-    
-    if (!category) {
-      return next(
-        new ErrorResponse(`Category not found with id of ${req.body.category}`, 404)
-      );
+  // Configure multer for file uploads
+  const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+      const uploadDir = 'tmp/uploads/';
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: function(req, file, cb) {
+      cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`);
     }
-  }
+  });
 
-  const listing = await Listing.create(req.body);
+  const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+    fileFilter: function(req, file, cb) {
+      const filetypes = /jpeg|jpg|png|webp/;
+      const mimetype = filetypes.test(file.mimetype);
+      const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only .jpeg, .jpg, .png and .webp files are allowed'));
+      }
+    }
+  }).array('images', 5); // Allow up to 5 images
 
-  res.status(201).json({
-    success: true,
-    data: listing
+  upload(req, res, async function(err) {
+    if (err instanceof multer.MulterError) {
+      return next(new ErrorResponse(`Upload error: ${err.message}`, 400));
+    } else if (err) {
+      return next(new ErrorResponse(`${err.message}`, 400));
+    }
+
+    try {
+      // Add user to req.body
+      req.body.addedBy = req.user.id;
+
+      // Check if category exists
+      if (req.body.category) {
+        const category = await Category.findById(req.body.category);
+        
+        if (!category) {
+          return next(
+            new ErrorResponse(`Category not found with id of ${req.body.category}`, 404)
+          );
+        }
+      }
+
+      // Process images if they were uploaded
+      let imageUrls = [];
+      if (req.files && req.files.length > 0) {
+        imageUrls = await Promise.all(
+          req.files.map(async (file) => {
+            try {
+              const bucket = admin.storage().bucket();
+              
+              const uploadResponse = await bucket.upload(file.path, {
+                destination: `listings/${file.filename}`,
+                metadata: {
+                  contentType: file.mimetype,
+                },
+              });
+              
+              // Get public URL
+              const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent('listings/' + file.filename)}?alt=media`;
+              
+              // Delete the temporary file
+              fs.unlinkSync(file.path);
+              
+              return fileUrl;
+            } catch (error) {
+              // Cleanup if upload fails
+              if (fs.existsSync(file.path)) {
+                fs.unlinkSync(file.path);
+              }
+              throw error;
+            }
+          })
+        );
+
+        // Add image URLs to req.body
+        req.body.images = imageUrls;
+      }
+
+      const listing = await Listing.create(req.body);
+
+      res.status(201).json({
+        success: true,
+        data: listing
+      });
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      return next(new ErrorResponse(`Failed to create listing: ${error.message}`, 500));
+    }
   });
 });
 
@@ -155,43 +239,130 @@ exports.createListing = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/listings/:id
 // @access  Private
 exports.updateListing = asyncHandler(async (req, res, next) => {
-  let listing = await Listing.findById(req.params.id);
-
-  if (!listing) {
-    return next(
-      new ErrorResponse(`Listing not found with id of ${req.params.id}`, 404)
-    );
-  }
-
-  // Check if changing category and if new category exists
-  if (req.body.category && req.body.category !== listing.category.toString()) {
-    const category = await Category.findById(req.body.category);
-    
-    if (!category) {
-      return next(
-        new ErrorResponse(`Category not found with id of ${req.body.category}`, 404)
-      );
+  // Configure multer for file uploads
+  const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+      const uploadDir = 'tmp/uploads/';
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: function(req, file, cb) {
+      cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`);
     }
-  }
-
-  // Make sure user is listing owner or admin
-  if (listing.addedBy.toString() !== req.user.id && req.user.role !== 'admin') {
-    return next(
-      new ErrorResponse(
-        `User ${req.user.id} is not authorized to update this listing`,
-        401
-      )
-    );
-  }
-
-  listing = await Listing.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
   });
 
-  res.status(200).json({
-    success: true,
-    data: listing
+  const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+    fileFilter: function(req, file, cb) {
+      const filetypes = /jpeg|jpg|png|webp/;
+      const mimetype = filetypes.test(file.mimetype);
+      const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only .jpeg, .jpg, .png and .webp files are allowed'));
+      }
+    }
+  }).array('images', 5); // Allow up to 5 images
+
+  upload(req, res, async function(err) {
+    if (err instanceof multer.MulterError) {
+      return next(new ErrorResponse(`Upload error: ${err.message}`, 400));
+    } else if (err) {
+      return next(new ErrorResponse(`${err.message}`, 400));
+    }
+
+    try {
+      let listing = await Listing.findById(req.params.id);
+
+      if (!listing) {
+        return next(
+          new ErrorResponse(`Listing not found with id of ${req.params.id}`, 404)
+        );
+      }
+
+      // Check if changing category and if new category exists
+      if (req.body.category && req.body.category !== listing.category.toString()) {
+        const category = await Category.findById(req.body.category);
+        
+        if (!category) {
+          return next(
+            new ErrorResponse(`Category not found with id of ${req.body.category}`, 404)
+          );
+        }
+      }
+
+      // Make sure user is listing owner or admin
+      if (listing.addedBy.toString() !== req.user.id && req.user.role !== 'admin') {
+        return next(
+          new ErrorResponse(
+            `User ${req.user.id} is not authorized to update this listing`,
+            401
+          )
+        );
+      }
+
+      // Process new images if they were uploaded
+      if (req.files && req.files.length > 0) {
+        const newImageUrls = await Promise.all(
+          req.files.map(async (file) => {
+            try {
+              const bucket = admin.storage().bucket();
+              
+              const uploadResponse = await bucket.upload(file.path, {
+                destination: `listings/${file.filename}`,
+                metadata: {
+                  contentType: file.mimetype,
+                },
+              });
+              
+              // Get public URL
+              const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent('listings/' + file.filename)}?alt=media`;
+              
+              // Delete the temporary file
+              fs.unlinkSync(file.path);
+              
+              return fileUrl;
+            } catch (error) {
+              // Cleanup if upload fails
+              if (fs.existsSync(file.path)) {
+                fs.unlinkSync(file.path);
+              }
+              throw error;
+            }
+          })
+        );
+
+        // Handle image updates based on request
+        if (req.body.replaceImages === 'true') {
+          // Replace all existing images
+          req.body.images = newImageUrls;
+        } else {
+          // Add new images to existing ones
+          const currentImages = listing.images || [];
+          req.body.images = [...currentImages, ...newImageUrls];
+        }
+      }
+
+      // Update the listing
+      listing = await Listing.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true
+      });
+
+      res.status(200).json({
+        success: true,
+        data: listing
+      });
+    } catch (error) {
+      console.error('Error updating listing:', error);
+      return next(new ErrorResponse(`Failed to update listing: ${error.message}`, 500));
+    }
   });
 });
 

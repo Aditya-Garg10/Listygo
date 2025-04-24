@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const path = require('path'); // Add this if not already imported
 const errorHandler = require('./middleware/error');
 const adminRoutes = require('./routes/admin');
 const listingsRoutes = require('./routes/listings');
@@ -33,9 +34,19 @@ app.use(cookieParser());
 
 // Enable CORS
 app.use(cors({
-  origin: "https://listygo-fe-two.vercel.app", // Replace with your frontend URL
+  origin: "https://listygo-fe-two.vercel.app",
   credentials: true
 }));
+
+// Create tmp/uploads directory if it doesn't exist
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'tmp/uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Serve static files from tmp/uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'tmp/uploads')));
 
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);

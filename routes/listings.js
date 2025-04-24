@@ -8,26 +8,21 @@ const {
   updateListing,
   deleteListing,
   getListingsByCategory,
-  getFeaturedListings
+  getFeaturedListings,
+  uploadImages
 } = require('../controllers/listings');
 
 
 
-// after
+// Add proper content-type handling for multipart form data
 router.route('/')
   .get(getListings)
   .post(protect, authorize('admin', 'super-admin'), createListing);
-
-
-router.route('/featured')
-  .get(getFeaturedListings);
-
-router.route('/category/:categoryId')
-  .get(getListingsByCategory);
 
 router.route('/:id')
   .get(getListing)
   .put(protect, authorize('admin', 'super-admin'), updateListing)
   .delete(protect, authorize('admin', 'super-admin'), deleteListing);
+
 
 module.exports = router;
