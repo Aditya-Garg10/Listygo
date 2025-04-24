@@ -1,8 +1,16 @@
-// HeaderCarouselSection.jsx
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Hotel, Home, ShoppingBag, ChevronDown, Search, MapPin } from "lucide-react"; // Added MapPin
-import { Link, useNavigate} from "react-router-dom"; // Import Link for routing
+import {
+  ChevronLeft,
+  ChevronRight,
+  Hotel,
+  Home,
+  ShoppingBag,
+  ChevronDown,
+  Search,
+  MapPin,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 const slides = [
   {
@@ -11,7 +19,7 @@ const slides = [
     subtitle: "Top-rated hotels, motels & homestays near you",
     image: "https://images.unsplash.com/photo-1566073771259-6a8506099945",
     icon: <Hotel size={16} />,
-    route: "/listings/accommodations" // Example route
+    route: "/listings/accommodations",
   },
   {
     category: "Real Estate",
@@ -19,7 +27,7 @@ const slides = [
     subtitle: "Buy, sell or rent homes and offices",
     image: "https://images.unsplash.com/photo-1570129477492-45c003edd2be",
     icon: <Home size={16} />,
-    route: "/listings/real-estate" // Example route
+    route: "/listings/real-estate",
   },
   {
     category: "Shopping",
@@ -27,23 +35,26 @@ const slides = [
     subtitle: "Local marketplace for everything you need",
     image: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f",
     icon: <ShoppingBag size={16} />,
-    route: "/listings/shopping" // Example route
+    route: "/listings/shopping",
   },
 ];
 
 export default function HeaderCarouselSection() {
-  const navigate = useNavigate(); // Initialize useNavigate for routing
+  const navigate = useNavigate();
   const [current, setCurrent] = React.useState(0);
-  const [location, setLocation] = React.useState(""); // Geolocation state
-  const [searchLocation, setSearchLocation] = React.useState(""); // State for location input
+  const [location, setLocation] = React.useState("");
+  const [searchLocation, setSearchLocation] = React.useState("");
   const [searchInput, setSearchInput] = React.useState("");
   const [suggestions, setSuggestions] = React.useState([]);
-  const [selectedCategory, setSelectedCategory] = React.useState("all"); // State for dropdown
-  const [isSearching, setIsSearching] = React.useState(false); // State for loading overlay
+  const [selectedCategory, setSelectedCategory] = React.useState("all");
+  const [isSearching, setIsSearching] = React.useState(false);
 
   const length = slides.length;
 
-  const nextSlide = React.useCallback(() => setCurrent((prev) => (prev + 1) % length), [length]);
+  const nextSlide = React.useCallback(
+    () => setCurrent((prev) => (prev + 1) % length),
+    [length]
+  );
   const prevSlide = () => setCurrent((current - 1 + length) % length);
 
   React.useEffect(() => {
@@ -51,91 +62,77 @@ export default function HeaderCarouselSection() {
     return () => clearInterval(interval);
   }, [nextSlide]);
 
-  // Geolocation logic (remains the same)
   const handleGeoLocation = React.useCallback(() => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`
-            )
-              .then((res) => res.json())
-              .then((data) => {
-                const city = data.address.city || data.address.town || data.address.village || "Your Area";
-                setLocation(city);
-                // Optionally pre-fill search location if empty
-                // if (!searchLocation) setSearchLocation(city);
-              })
-              .catch(() => setLocation("Location Unavailable"));
-          },
-          () => setLocation("Location Unavailable")
-        );
-      } else {
-          setLocation("Geolocation not supported");
-      }
-  }, []); // Removed searchLocation dependency if not pre-filling
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`
+          )
+            .then((res) => res.json())
+            .then((data) => {
+              const city =
+                data.address.city ||
+                data.address.town ||
+                data.address.village ||
+                "Your Area";
+              setLocation(city);
+            })
+            .catch(() => setLocation("Location Unavailable"));
+        },
+        () => setLocation("Location Unavailable")
+      );
+    } else {
+      setLocation("Geolocation not supported");
+    }
+  }, []);
 
   React.useEffect(() => {
     handleGeoLocation();
   }, [handleGeoLocation]);
 
-  // Search input and suggestions logic
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchInput(val);
     if (val.length > 1) {
       setSuggestions(
-        ["Hotels", "Rentals", "Gyms", "Shopping Malls", "Events", "Studios"].filter((item) =>
-          item.toLowerCase().includes(val.toLowerCase())
-        )
+        [
+          "Hotels",
+          "Rentals",
+          "Gyms",
+          "Shopping Malls",
+          "Events",
+          "Studios",
+        ].filter((item) => item.toLowerCase().includes(val.toLowerCase()))
       );
     } else {
       setSuggestions([]);
     }
   };
 
-  // Location input change handler
   const handleLocationChange = (e) => {
     setSearchLocation(e.target.value);
   };
 
+  // Always navigate to /listings and clear filters
   const handleSearchSubmit = () => {
-    // Trim inputs to check if they are non-empty
-    const trimmedSearch = searchInput.trim();
-    const trimmedLocation = searchLocation.trim();
-
-    // Proceed only if at least one input has value
-    if (trimmedSearch || trimmedLocation) {
-      setIsSearching(true); // Set loading state to true
-
-      // Simulate a brief loading period before navigation
-      setTimeout(() => {
-        // Construct search params, only including non-empty values
-        const params = new URLSearchParams();
-        if (trimmedSearch) params.set('search', trimmedSearch);
-        if (selectedCategory !== 'all') params.set('category', selectedCategory);
-        if (trimmedLocation) params.set('location', trimmedLocation);
-
-        navigate(`/listings?${params.toString()}`);
-
-        // Clear inputs after search
-        setSearchInput("");
-        setSearchLocation(""); // Clear location input
-        setSuggestions([]);
-        setIsSearching(false); // Hide loading overlay
-      }, 1500); // 1.5 seconds of loading animation
-    }
+    setIsSearching(true);
+    setTimeout(() => {
+      navigate("/listings");
+      setSearchInput("");
+      setSearchLocation("");
+      setSelectedCategory("all");
+      setSuggestions([]);
+      setIsSearching(false);
+    }, 1500);
   };
-
 
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
   };
 
   return (
-    <section className="relative w-full h-[100vh] overflow-hidden pt-16"> {/* Ensure mt-18 matches your header height */}
-
-      {/* Category Tabs - Updated active state to blue */}
+    <section className="relative w-full h-[100vh] overflow-hidden pt-16">
       <div className="absolute top-6 left-4 right-4 md:left-6 md:right-auto z-20 flex gap-2 md:gap-3 flex-wrap justify-center md:justify-start">
         {slides.map((slide, index) => (
           <button
@@ -143,8 +140,8 @@ export default function HeaderCarouselSection() {
             onClick={() => setCurrent(index)}
             className={`flex items-center gap-1 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium shadow-md transition-all duration-300 ${
               current === index
-                ? "bg-blue-600 text-white scale-105" // Active tab is blue
-                : "bg-white/80 text-black/80 hover:bg-white" // Adjusted inactive/hover
+                ? "bg-blue-600 text-white scale-105"
+                : "bg-white/80 text-black/80 hover:bg-white"
             }`}
           >
             {slide.icon} {slide.category}
@@ -152,7 +149,6 @@ export default function HeaderCarouselSection() {
         ))}
       </div>
 
-      {/* Background slides */}
       <AnimatePresence initial={false}>
         <motion.div
           key={current}
@@ -167,41 +163,37 @@ export default function HeaderCarouselSection() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Content Overlay */}
       <div className="absolute inset-0 flex flex-col justify-center items-center text-white text-center p-4 z-10">
         <AnimatePresence mode="wait">
-            <motion.div
-                key={current}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5 }}
-                className="text-center"
-            >
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-2 drop-shadow-lg">
-                    {slides[current].title}
-                </h1>
-                <p className="text-lg md:text-2xl mb-6 drop-shadow-md">
-                    {slides[current].subtitle}
-                </p>
-            </motion.div>
+          <motion.div
+            key={current}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-2 drop-shadow-lg">
+              {slides[current].title}
+            </h1>
+            <p className="text-lg md:text-2xl mb-6 drop-shadow-md">
+              {slides[current].subtitle}
+            </p>
+          </motion.div>
         </AnimatePresence>
 
-        {/* Refined Search Bar */}
         <motion.div
-          className="mt-4 w-full max-w-xl lg:max-w-3xl relative" // Increased max-width slightly
+          className="mt-4 w-full max-w-xl lg:max-w-3xl relative"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <div className="flex flex-col md:flex-row items-stretch bg-white rounded-xl overflow-hidden shadow-lg border border-gray-300">
-
-            {/* Category Dropdown Section */}
             <div className="relative border-b border-gray-300 md:border-b-0 md:border-r w-full md:w-auto shrink-0">
               <select
                 className="w-full md:w-auto appearance-none cursor-pointer focus:outline-none bg-transparent text-gray-700 pl-4 pr-10 py-3 text-sm md:text-base"
-                value={selectedCategory} // Controlled component
-                onChange={handleCategoryChange} // Handle change
+                value={selectedCategory}
+                onChange={handleCategoryChange}
                 aria-label="Select Category"
               >
                 <option value="all">All Categories</option>
@@ -216,20 +208,21 @@ export default function HeaderCarouselSection() {
               </div>
             </div>
 
-            {/* Location Input Section */}
             <div className="relative flex-grow border-b border-gray-300 md:border-b-0 md:border-r">
-              <MapPin size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <MapPin
+                size={18}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
               <input
                 type="text"
                 value={searchLocation}
                 onChange={handleLocationChange}
-                placeholder={location || "Enter Location"} // Use detected location as placeholder
+                placeholder={location || "Enter Location"}
                 className="w-full pl-10 pr-4 py-3 text-sm md:text-base text-black bg-transparent focus:outline-none"
                 aria-label="Search location"
               />
             </div>
 
-            {/* Search Input Section */}
             <div className="relative flex-grow">
               <input
                 type="text"
@@ -267,7 +260,6 @@ export default function HeaderCarouselSection() {
               </AnimatePresence>
             </div>
 
-            {/* Search Button Section */}
             <motion.button
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-5 py-3 transition-colors duration-300 w-full md:w-auto flex items-center justify-center gap-2 shrink-0"
               onClick={handleSearchSubmit}
@@ -278,63 +270,57 @@ export default function HeaderCarouselSection() {
               <Search size={18} />
               <span className="text-sm md:text-base font-medium">Search</span>
             </motion.button>
-
           </div>
         </motion.div>
 
-        {/* CTA Buttons - Updated to use Link */}
         <div className="mt-8 flex flex-wrap justify-center gap-4">
-           {/* Explore Now Button routes to /all-listings */}
-           <motion.div // Wrap Link in motion.div for animation
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.95 }}
-             initial={{ opacity: 0, y: 20 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ duration: 0.5, delay: 0.5 }}
-           >
-             <Link to={`/listings?category=${slides[current].category.toLowerCase()}`}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <Link
+              to="/listings"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colORS duration-300 text-sm md:text-base"
+            >
+              Explore Now <ChevronRight size={18} />
+            </Link>
+          </motion.div>
 
-               className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 text-sm md:text-base"
-             >
-               Explore Now <ChevronRight size={18} />
-             </Link>
-           </motion.div>
-
-           {/* Learn More Button routes to /about-us */}
-           <motion.div // Wrap Link in motion.div for animation
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.95 }}
-             initial={{ opacity: 0, y: 20 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ duration: 0.5, delay: 0.7 }}
-           >
-             <Link
-               to="/about" // Route to About Us page
-               className="inline-block px-6 py-2.5 bg-white/20 text-white font-semibold rounded-lg border border-white hover:bg-white/30 transition-colors duration-300 text-sm md:text-base"
-             >
-               Learn More
-             </Link>
-           </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+          >
+            <Link
+              to="/about"
+              className="inline-block px-6 py-2.5 bg-white/20 text-white font-semibold rounded-lg border border-white hover:bg-white/30 transition-colORS duration-300 text-sm md:text-base"
+            >
+              Learn More
+            </Link>
+          </motion.div>
         </div>
       </div>
 
-      {/* Navigation Arrows */}
       <button
-        className="absolute top-1/2 left-2 md:left-4 transform -translate-y-1/2 cursor-pointer z-10 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors text-white"
+        className="absolute top-1/2 left-2 md:left-4 transform -translate-y-1/2 cursor-pointer z-10 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colORS text-white"
         onClick={prevSlide}
         aria-label="Previous Slide"
       >
         <ChevronLeft size={28} />
       </button>
       <button
-        className="absolute top-1/2 right-2 md:right-4 transform -translate-y-1/2 cursor-pointer z-10 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors text-white"
+        className="absolute top-1/2 right-2 md:right-4 transform -translate-y-1/2 cursor-pointer z-10 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colORS text-white"
         onClick={nextSlide}
         aria-label="Next Slide"
       >
         <ChevronRight size={28} />
       </button>
 
-      {/* Dots Navigation - Active dot uses blue */}
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
         {slides.map((_, i) => (
           <button
@@ -344,15 +330,19 @@ export default function HeaderCarouselSection() {
             className="p-0.5"
           >
             <motion.div
-              animate={{ scale: i === current ? 1.4 : 1, opacity: i === current ? 1 : 0.6 }}
+              animate={{
+                scale: i === current ? 1.4 : 1,
+                opacity: i === current ? 1 : 0.6,
+              }}
               transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              className={`w-2.5 h-2.5 rounded-full ${i === current ? "bg-blue-500" : "bg-white/60"}`} // Active dot is blue
+              className={`w-2.5 h-2.5 rounded-full ${
+                i === current ? "bg-blue-500" : "bg-white/60"
+              }`}
             />
           </button>
         ))}
       </div>
 
-      {/* Search Loading Overlay */}
       <AnimatePresence>
         {isSearching && (
           <motion.div
@@ -364,12 +354,12 @@ export default function HeaderCarouselSection() {
             <motion.div
               animate={{
                 rotate: 360,
-                borderRadius: ["50% 50%", "40% 60%", "50% 50%"]
+                borderRadius: ["50% 50%", "40% 60%", "50% 50%"],
               }}
               transition={{
                 duration: 1.5,
                 repeat: Infinity,
-                ease: "linear"
+                ease: "linear",
               }}
               className="w-16 h-16 border-t-4 border-blue-500 border-r-4 rounded-full"
             />
@@ -384,7 +374,6 @@ export default function HeaderCarouselSection() {
           </motion.div>
         )}
       </AnimatePresence>
-
     </section>
   );
 }
