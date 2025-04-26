@@ -34,7 +34,7 @@ app.use(cookieParser());
 
 // Enable CORS
 app.use(cors({
-  origin: "https://listygo-fe-two.vercel.app",
+  origin: "https://listygo-fe-two.vercel.app", //https://listygo-fe-two.vercel.app
   credentials: true
 }));
 

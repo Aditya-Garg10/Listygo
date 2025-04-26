@@ -16,6 +16,6 @@ router.route('/')
 router.route('/:id')
   .get(getCategory)
   .put(protect, authorize('admin'), updateCategory)
-  .delete(protect, authorize('admin'), deleteCategory);
+  .delete(protect, authorize('admin','super-admin'), deleteCategory);
 
 module.exports = router;
