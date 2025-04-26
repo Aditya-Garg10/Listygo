@@ -97,7 +97,7 @@ exports.deleteCategory = asyncHandler(async (req, res, next) => {
   //   return next(new ErrorResponse(`Cannot delete category that has listings associated with it`, 400));
   // }
 
-  await category.remove();
+  await Category.findByIdAndDelete(req.params.id);
 
   res.status(200).json({
     success: true,
