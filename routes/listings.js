@@ -7,9 +7,6 @@ const {
   createListing,
   updateListing,
   deleteListing,
-  getListingsByCategory,
-  getFeaturedListings,
-  uploadImages
 } = require('../controllers/listings');
 
 
@@ -22,7 +19,7 @@ router.route('/')
 router.route('/:id')
   .get(getListing)
   .put(protect, authorize('admin', 'super-admin'), updateListing)
-  .delete(protect, authorize('admin', 'super-admin'), deleteListing);
+  .delete(protect, authorize('super-admin'), deleteListing);
 
 
 module.exports = router;
