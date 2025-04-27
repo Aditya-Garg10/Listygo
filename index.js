@@ -9,6 +9,7 @@ const adminRoutes = require('./routes/admin');
 const listingsRoutes = require('./routes/listings');
 const categoriesRoutes = require('./routes/categories');
 const userRoutes = require('./routes/users');
+const layoutRoutes = require('./routes/layout'); // Add layout routes
 
 // Load env vars
 dotenv.config();
@@ -32,11 +33,9 @@ mongoose
 app.use(express.json());
 app.use(cookieParser());
 
-
-
 // Enable CORS
 app.use(cors({
-  origin: "https://listygo-fe-two.vercel.app", //https://listygo-fe-two.vercel.app
+  origin: ["https://listygo-fe-two.vercel.app", "https://listygo-fe-two.vercel.app"], // Updated to accept multiple origins
   credentials: true
 }));
 
@@ -65,6 +64,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/listings', listingsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/layout', layoutRoutes); // Mount layout routes
 
 // Error handling middleware (should be last)
 app.use(errorHandler);
