@@ -7,9 +7,8 @@ const {
   createListing,
   updateListing,
   deleteListing,
+  deleteListingImage  // Add this new controller
 } = require('../controllers/listings');
-
-
 
 // Add proper content-type handling for multipart form data
 router.route('/')
@@ -19,7 +18,10 @@ router.route('/')
 router.route('/:id')
   .get(getListing)
   .put(protect, authorize('admin', 'super-admin'), updateListing)
-  .delete(protect, authorize('super-admin'), deleteListing);
+  .delete(protect, authorize('super-admin','admin'), deleteListing);
 
+// New route for deleting individual images
+router.route('/:id/images')
+  .delete(protect, authorize('admin', 'super-admin'), deleteListingImage);
 
 module.exports = router;

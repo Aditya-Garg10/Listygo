@@ -349,6 +349,7 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
         }
       }
 
+      console.log('✅ Updated :', req.body); // ✅ Add this
       // Update the listing
       listing = await Listing.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
@@ -431,4 +432,91 @@ exports.getFeaturedListings = asyncHandler(async (req, res, next) => {
     count: listings.length,
     data: listings
   });
+});
+
+// Add this function to your listings controller
+
+// @desc    Delete a specific image from a listing
+// @route   DELETE /api/listings/:id/images
+// @access  Private
+exports.deleteListingImage = asyncHandler(async (req, res, next) => {
+  // Get the listing
+  const listing = await Listing.findById(req.params.id);
+  
+  if (!listing) {
+    return next(
+      new ErrorResponse(`Listing not found with id of ${req.params.id}`, 404)
+    );
+  }
+  
+  // Check authorization
+  if (listing.addedBy.toString() !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'super-admin') {
+    return next(
+      new ErrorResponse(`Not authorized to update this listing`, 401)
+    );
+  }
+  
+  // Make sure imageUrl is provided in the request body
+  const { imageUrl } = req.body;
+  if (!imageUrl) {
+    return next(
+      new ErrorResponse('Please provide the image URL to delete', 400)
+    );
+  }
+  
+  // Check if the image exists in the listing
+  if (!listing.images.includes(imageUrl)) {
+    return next(
+      new ErrorResponse('Image not found in this listing', 404)
+    );
+  }
+  
+  // Make sure we don't delete the last image
+  if (listing.images.length <= 1) {
+    return next(
+      new ErrorResponse('Cannot delete the last image. Listings must have at least one image.', 400)
+    );
+  }
+  
+  try {
+    // Delete from Firebase Storage if it's a Firebase URL
+    if (imageUrl.includes('firebasestorage.googleapis.com')) {
+      // Extract the file path from the URL
+      const bucket = admin.storage().bucket();
+      
+      // Parse the URL to get the file path
+      // Example URL format: https://firebasestorage.googleapis.com/v0/b/bucket-name/o/listings%2Ffilename.jpg?alt=media
+      const urlPath = decodeURIComponent(imageUrl.split('/o/')[1].split('?')[0]);
+      
+      console.log(`Attempting to delete file at path: ${urlPath}`);
+      
+      // Delete the file from Firebase Storage
+      await bucket.file(urlPath).delete()
+        .then(() => {
+          console.log(`Successfully deleted file: ${urlPath}`);
+        })
+        .catch((error) => {
+          console.error(`Error deleting file from Firebase: ${error.message}`);
+          // We continue even if Firebase deletion fails
+          // This ensures the URL is at least removed from the database
+        });
+    }
+    
+    // Remove the image from the database entry
+    listing.images = listing.images.filter(img => img !== imageUrl);
+    
+    // Save the updated listing
+    await listing.save();
+    
+    res.status(200).json({
+      success: true,
+      message: "Image successfully deleted",
+      data: listing
+    });
+  } catch (error) {
+    console.error("Error in deleteListingImage:", error);
+    return next(
+      new ErrorResponse(`Failed to delete image: ${error.message}`, 500)
+    );
+  }
 });
