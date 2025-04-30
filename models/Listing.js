@@ -16,6 +16,10 @@ const ListingSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a location']
   },
+  locationLink: {
+    type: String,
+    default: null, // Explicitly set default to null
+  },
   price: {
     type: Number,
     required: [true, 'Please add a price']
@@ -126,6 +130,15 @@ const ListingSchema = new mongoose.Schema({
     default: false
   },
   tags: [String]
+});
+
+// Add a pre-save middleware to ensure locationLink is properly handled
+ListingSchema.pre('save', function(next) {
+  // If locationLink exists but is empty string, set to null for consistency
+  if (this.locationLink === '') {
+    this.locationLink = null;
+  }
+  next();
 });
 
 module.exports = mongoose.model('Listing', ListingSchema);

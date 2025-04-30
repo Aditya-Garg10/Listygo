@@ -175,6 +175,14 @@ exports.createListing = asyncHandler(async (req, res, next) => {
       // Add user to req.body
       req.body.addedBy = req.user.id;
 
+      // Log received data for debugging, especially locationLink
+      console.log('Creating listing with locationLink:', req.body.locationLink);
+
+      // Ensure the locationLink field is handled properly
+      if (req.body.locationLink === '') {
+        req.body.locationLink = null; // Consistent handling of empty strings
+      }
+
       // Check if category exists
       if (req.body.category) {
         const category = await Category.findById(req.body.category);
@@ -223,6 +231,9 @@ exports.createListing = asyncHandler(async (req, res, next) => {
       }
 
       const listing = await Listing.create(req.body);
+      
+      // Log the created listing to verify locationLink was saved
+      console.log('Created listing with locationLink:', listing.locationLink);
 
       res.status(201).json({
         success: true,
@@ -278,6 +289,7 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
     }
 
     try {
+      // First retrieve the existing listing
       let listing = await Listing.findById(req.params.id);
 
       if (!listing) {
@@ -286,19 +298,10 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
         );
       }
 
-      // Check if changing category and if new category exists
-      if (req.body.category && req.body.category !== listing.category.toString()) {
-        const category = await Category.findById(req.body.category);
-        
-        if (!category) {
-          return next(
-            new ErrorResponse(`Category not found with id of ${req.body.category}`, 404)
-          );
-        }
-      }
-
-      // Make sure user is listing owner or admin
-      if (listing.addedBy.toString() !== req.user.id && req.user.role !== 'admin') {
+      // Authorization check
+      if (listing.addedBy.toString() !== req.user.id && 
+          req.user.role !== 'admin' && 
+          req.user.role !== 'super-admin') {
         return next(
           new ErrorResponse(
             `User ${req.user.id} is not authorized to update this listing`,
@@ -307,61 +310,36 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
         );
       }
 
-      // Process new images if they were uploaded
-      if (req.files && req.files.length > 0) {
-        const newImageUrls = await Promise.all(
-          req.files.map(async (file) => {
-            try {
-              const bucket = admin.storage().bucket();
-              
-              const uploadResponse = await bucket.upload(file.path, {
-                destination: `listings/${file.filename}`,
-                metadata: {
-                  contentType: file.mimetype,
-                },
-              });
-              
-              // Get public URL
-              const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent('listings/' + file.filename)}?alt=media`;
-              
-              // Delete the temporary file
-              fs.unlinkSync(file.path);
-              
-              return fileUrl;
-            } catch (error) {
-              // Cleanup if upload fails
-              if (fs.existsSync(file.path)) {
-                fs.unlinkSync(file.path);
-              }
-              throw error;
-            }
-          })
-        );
-
-        // Handle image updates based on request
-        if (req.body.replaceImages === 'true') {
-          // Replace all existing images
-          req.body.images = newImageUrls;
-        } else {
-          // Add new images to existing ones
-          const currentImages = listing.images || [];
-          req.body.images = [...currentImages, ...newImageUrls];
-        }
+      // Debug output
+      console.log('⭐ Update request for listing ID:', req.params.id);
+      console.log('⭐ Fields in request:', Object.keys(req.body));
+      console.log('⭐ locationLink received:', req.body.locationLink);
+      
+      // Explicitly handle the locationLink field
+      console.log('Processing locationLink for update:', req.body.locationLink);
+      
+      // Set empty string to null for consistency
+      if (req.body.locationLink === '') {
+        req.body.locationLink = null;
       }
 
-      console.log('✅ Updated :', req.body); // ✅ Add this
-      // Update the listing
-      listing = await Listing.findByIdAndUpdate(req.params.id, req.body, {
+      // Make sure locationLink is included in the update data
+      const updateData = { ...req.body };
+
+      listing = await Listing.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
         runValidators: true
       });
+
+      // Log the updated listing to verify locationLink was saved
+      console.log('Updated listing with locationLink:', listing.locationLink);
 
       res.status(200).json({
         success: true,
         data: listing
       });
     } catch (error) {
-      console.error('Error updating listing:', error);
+      console.error('Error updating listing:', error.stack || error.message || error);
       return next(new ErrorResponse(`Failed to update listing: ${error.message}`, 500));
     }
   });

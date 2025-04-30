@@ -7,10 +7,11 @@ const {
   createListing,
   updateListing,
   deleteListing,
-  deleteListingImage  // Add this new controller
+  getListingsByCategory,
+  getFeaturedListings
 } = require('../controllers/listings');
 
-// Add proper content-type handling for multipart form data
+// Standard routes
 router.route('/')
   .get(getListings)
   .post(protect, authorize('admin', 'super-admin'), createListing);
@@ -18,10 +19,10 @@ router.route('/')
 router.route('/:id')
   .get(getListing)
   .put(protect, authorize('admin', 'super-admin'), updateListing)
-  .delete(protect, authorize('super-admin','admin'), deleteListing);
+  .delete(protect, authorize('admin', 'super-admin'), deleteListing);
 
-// New route for deleting individual images
-router.route('/:id/images')
-  .delete(protect, authorize('admin', 'super-admin'), deleteListingImage);
+// Special routes - put these after the /:id routes to prevent conflicts
+router.route('/category/:categoryId').get(getListingsByCategory);
+router.route('/featured').get(getFeaturedListings);
 
 module.exports = router;
