@@ -11,8 +11,6 @@ const admin = require('../config/firebase');
 // @route   GET /api/listings
 // @access  Public
 exports.getListings = asyncHandler(async (req, res, next) => {
-  console.log("💡 createListing called", req.body); // ✅ Add this
-
   // Copy req.query
   const reqQuery = { ...req.query };
 
@@ -48,13 +46,7 @@ exports.getListings = asyncHandler(async (req, res, next) => {
   // Handle location filtering
   if (req.query.location) {
     const locationQuery = req.query.location;
-    console.log('Backend received location query:', locationQuery);
-    
-    // Use a more flexible matching approach
     queryObj.location = { $regex: locationQuery, $options: 'i' };
-    
-    // Log the query we're about to execute
-    console.log('Location filter query:', JSON.stringify(queryObj));
   }
 
   // Finding resource
@@ -106,6 +98,7 @@ exports.getListings = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     count: listings.length,
+    totalCount: total, // Add this line to return total count
     pagination,
     data: listings
   });

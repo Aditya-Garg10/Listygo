@@ -141,4 +141,10 @@ ListingSchema.pre('save', function(next) {
   next();
 });
 
+// Add indexes for commonly searched/filtered fields
+ListingSchema.index({ name: 'text', description: 'text', location: 'text' });
+ListingSchema.index({ price: 1 });
+ListingSchema.index({ rating: -1 });
+ListingSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Listing', ListingSchema);
