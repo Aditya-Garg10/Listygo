@@ -61,14 +61,17 @@ exports.updateLayout = asyncHandler(async (req, res, next) => {
   let layout = await Layout.findOne();
   
   if (!layout) {
+    // Create new layout with request body
     layout = await Layout.create(req.body);
   } else {
-    // Update with new values
-    layout.large1 = req.body.large1 || layout.large1;
-    layout.large2 = req.body.large2 || layout.large2;
-    layout.small1 = req.body.small1 || layout.small1;
-    layout.small2 = req.body.small2 || layout.small2;
-    layout.small3 = req.body.small3 || layout.small3;
+    // Explicitly set all fields from req.body (will be undefined if not provided)
+    layout.large1 = req.body.large1;
+    layout.large2 = req.body.large2;
+    layout.small1 = req.body.small1;
+    layout.small2 = req.body.small2;
+    layout.small3 = req.body.small3;
+    
+    // Always update the timestamp
     layout.lastUpdated = Date.now();
     
     await layout.save();
