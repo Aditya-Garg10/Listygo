@@ -35,7 +35,7 @@ app.use(cookieParser());
 
 // Enable CORS
 app.use(cors({
-  origin: ["https://listygo-fe-two.vercel.app", "http://localhost:5173"], // Updated to accept multiple origins
+  origin: ["https://listygo-fe-two.vercel.app", "https://pathsuchi.com", "http://localhost:5173"], // Updated to accept multiple origins
   credentials: true
 }));
 
