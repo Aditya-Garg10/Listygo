@@ -1,5 +1,10 @@
 {
-    "watch": ["src", "index.js"],  
-    "ignore": ["node_modules/*", ".git/*"],
+    "watch": ["src", "index.js"],     
+    "ignore": [
+      "node_modules/*",
+      "/usr/lib/*",                    
+      "firebase-credentials.json"
+    ],
     "ext": "js,json"
   }
+  
