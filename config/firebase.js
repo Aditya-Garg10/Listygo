@@ -9,21 +9,20 @@ const initFirebase = () => {
   if (!admin.apps.length) {
     try {
       // Check if we can access the environment variable      
-      const storageBucket = process.env.FIREBASE_STORAGE_BUCKET ;
-      
+      const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
+
       // Try different approaches to get the service account
       if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
         try {
           // Try to parse it as JSON directly
-          
+
           console.log("Successfully parsed FIREBASE_SERVICE_ACCOUNT_KEY from environment variable");
         } catch (parseError) {
           console.error("Error parsing FIREBASE_SERVICE_ACCOUNT_KEY:", parseError.message);
-          
+
           // If that fails, maybe it's a file path
           if (fs.existsSync(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)) {
             const rawData = fs.readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-            serviceAccount = JSON.parse(rawData);
             console.log("Loaded service account from file");
           }
         }
@@ -45,7 +44,7 @@ const initFirebase = () => {
         credential: admin.credential.cert(serviceAccount),
         storageBucket: storageBucket
       });
-      
+
       console.log('Firebase initialized successfully');
     } catch (error) {
       console.error('Firebase initialization error:', error);
