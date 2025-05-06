@@ -8,8 +8,7 @@ dotenv.config(); // Load environment variables from .env file
 const initFirebase = () => {
   if (!admin.apps.length) {
     try {
-      // Check if we can access the environment variable
-      let serviceAccount;
+      // Check if we can access the environment variable      
       const storageBucket = process.env.FIREBASE_STORAGE_BUCKET ;
       
       // Try different approaches to get the service account
