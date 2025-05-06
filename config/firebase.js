@@ -2,6 +2,7 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const serviceAccount = require('../firebase-credentials.json'); // Adjust the path as necessary
 dotenv.config(); // Load environment variables from .env file
 // Initialize Firebase if not already initialized
 const initFirebase = () => {
@@ -15,7 +16,7 @@ const initFirebase = () => {
       if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
         try {
           // Try to parse it as JSON directly
-          serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+          
           console.log("Successfully parsed FIREBASE_SERVICE_ACCOUNT_KEY from environment variable");
         } catch (parseError) {
           console.error("Error parsing FIREBASE_SERVICE_ACCOUNT_KEY:", parseError.message);
