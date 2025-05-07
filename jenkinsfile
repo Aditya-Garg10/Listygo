@@ -1,15 +1,10 @@
 pipeline {
   agent any
-
-  options {
-    // Disable the built-in first checkout so we don’t pull main by mistake
-    skipDefaultCheckout()
-  }
+  options { skipDefaultCheckout() }
 
   stages {
-    stage('Checkout adi-be into Listygo/') {
+    stage('Checkout adi-be') {
       steps {
-        // Clone only the adi-be branch into the "Listygo" subfolder
         dir('Listygo') {
           git branch: 'adi-be',
               url:   'https://github.com/Aditya-Garg10/Listygo.git'
@@ -17,9 +12,33 @@ pipeline {
       }
     }
 
+    stage('Inject secrets') {
+      steps {
+        // 1) Secret JSON
+        withCredentials([file(credentialsId: 'firebase-credentials', variable: 'FIREBASE_JSON')]) {
+          sh 'cp $FIREBASE_JSON Listygo/firebase-credentials.json'
+        }
+
+        // 2) .env via Config File Provider (if you used it)
+        configFileProvider([configFile(fileId: 'listygo-env', variable: 'ENV_FILE')]) {
+          sh 'cp $ENV_FILE Listygo/.env'
+        }
+
+        // OR, if you added individual secret texts:
+        // withCredentials([
+        //   string(credentialsId: 'FIREBASE_API_KEY', variable: 'FIREBASE_API_KEY'),
+        //   string(credentialsId: 'DB_URL',           variable: 'DB_URL')
+        // ]) {
+        //   writeFile file: 'Listygo/.env', text: """
+        // FIREBASE_API_KEY=${FIREBASE_API_KEY}
+        // DB_URL=${DB_URL}
+        // """
+        // }
+      }
+    }
+
     stage('Build Docker Image') {
       steps {
-        // Build using the Dockerfile at Listygo/Dockerfile
         dir('Listygo') {
           sh 'docker build -t home-backend .'
         }
@@ -29,11 +48,16 @@ pipeline {
     stage('Redeploy') {
       steps {
         sh '''
+          # stop/remove old
           docker stop home-backend-1 || true
           docker rm   home-backend-1 || true
+
+          # run with secrets mounted
           docker run -d \
             --name home-backend-1 \
             -p 8000:3000 \
+            -v $WORKSPACE/Listygo/firebase-credentials.json:/firebase-credentials.json \
+            --env-file $WORKSPACE/Listygo/.env \
             home-backend
         '''
       }
@@ -41,11 +65,7 @@ pipeline {
   }
 
   post {
-    success {
-      echo '✅ Deployment complete!'
-    }
-    failure {
-      echo '❌ Something went wrong. Check the console output above.'
-    }
+    success { echo '✅ Deployment complete!' }
+    failure { echo '❌ Deployment failed – check logs.' }
   }
 }
