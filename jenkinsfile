@@ -4,13 +4,13 @@ pipeline {
   stages {
     stage('Pull Code') {
       steps {
-       git branch: 'adi-be', url: 'https://github.com/Aditya-Garg10/Listygo.git'
+        git branch: 'adi-be', url: 'https://github.com/Aditya-Garg10/Listygo.git'
       }
     }
 
     stage('Build Docker Image') {
       steps {
-        sh 'docker build -t home-backend .'
+        sh 'docker build -t home-backend ./Listygo'
       }
     }
 
