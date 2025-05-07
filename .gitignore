@@ -3,4 +3,4 @@ node_modules
 tmp
 seeder.js
 firebase-credentials.json
-Dockerfile
+
