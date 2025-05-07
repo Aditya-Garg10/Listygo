@@ -1,8 +1,6 @@
 pipeline {
   agent any
-  options {
-    skipDefaultCheckout()
-  }
+  options { skipDefaultCheckout() }
 
   stages {
     stage('Checkout adi-be into Listygo/') {
@@ -17,7 +15,10 @@ pipeline {
     stage('Inject secrets & env') {
       steps {
         dir('Listygo') {
-          // 1) Copy the JSON credential
+          // FORCE workspace to be writable
+          sh 'chmod -R a+rw .'
+
+          // Copy the Firebase credentials JSON
           withCredentials([file(
             credentialsId: 'firebase-credentials',
             variable:      'FIREBASE_JSON'
@@ -25,7 +26,7 @@ pipeline {
             sh 'cp $FIREBASE_JSON firebase-credentials.json'
           }
 
-          // 2) Copy your .env
+          // Copy your .env from the Config File Provider
           configFileProvider([configFile(
             fileId:   'listygo-env',
             variable: 'ENV_FILE'
