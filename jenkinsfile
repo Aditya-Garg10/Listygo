@@ -2,26 +2,46 @@ pipeline {
   agent any
 
   stages {
-    stage('Pull Code') {
+    stage('Checkout adi-be') {
       steps {
-        git branch: 'adi-be', url: 'https://github.com/Aditya-Garg10/Listygo.git'
+        // Clone only the adi-be branch
+        git branch: 'adi-be',
+            url:   'https://github.com/Aditya-Garg10/Listygo.git'
       }
     }
 
     stage('Build Docker Image') {
       steps {
-        sh 'docker build -t home-backend ./Listygo'
+        // Switch into the Listygo folder (where your Dockerfile is)
+        dir('Listygo') {
+          sh 'docker build -t home-backend .'
+        }
       }
     }
 
     stage('Redeploy') {
       steps {
         sh '''
+          # Stop & remove old container (if any)
           docker stop home-backend-1 || true
-          docker rm home-backend-1 || true
-          docker run -d --name home-backend-1 -p 8000:3000 home-backend
+          docker rm   home-backend-1 || true
+
+          # Run new container
+          docker run -d \
+            --name home-backend-1 \
+            -p 8000:3000 \
+            home-backend
         '''
       }
+    }
+  }
+
+  post {
+    success {
+      echo '✅ Deployment complete!'
+    }
+    failure {
+      echo '❌ Something went wrong. Check the console output above.'
     }
   }
 }
