@@ -10,7 +10,9 @@ pipeline {
 
     stage('Build Docker Image') {
       steps {
-        sh 'docker build -t home-backend .'
+    dir('backend') {                    // ← change to the folder that actually contains your Dockerfile
+      sh 'docker build -t home-backend .'
+    }
       }
     }
 
