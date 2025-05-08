@@ -1,46 +1,27 @@
 pipeline {
   agent any
-  options { skipDefaultCheckout() }
+
+  options {
+    // don’t do Jenkins’s default checkout (which might grab the wrong branch)
+    skipDefaultCheckout()
+  }
 
   stages {
-    stage('Checkout adi-be into Listygo/') {
+    stage('Checkout Listygo-Prod') {
       steps {
-        dir('Listygo') {
-          git branch: 'adi-be',
-              url:    'https://github.com/Aditya-Garg10/Listygo.git'
-        }
-      }
-    }
-
-    stage('Inject secrets & env') {
-      steps {
-        dir('Listygo') {
-          // FORCE workspace to be writable
-          sh 'chmod -R a+rw .'
-
-          // Copy the Firebase credentials JSON
-          withCredentials([file(
-            credentialsId: 'firebase-credentials',
-            variable:      'FIREBASE_JSON'
-          )]) {
-            sh 'cp $FIREBASE_JSON firebase-credentials.json'
-          }
-
-          // Copy your .env from the Config File Provider
-          configFileProvider([configFile(
-            fileId:   'listygo-env',
-            variable: 'ENV_FILE'
-          )]) {
-            sh 'cp $ENV_FILE .env'
-          }
+        // clone only your prod branch into the Listygo-Prod folder
+        dir('Listygo-Prod') {
+          git branch: 'main',                                   // or 'prod' if you use a prod branch
+              url:    'https://github.com/Sarman-Keshwani/Listygo-Prod.git'
         }
       }
     }
 
     stage('Build Docker Image') {
       steps {
-        dir('Listygo') {
-          sh 'docker build -t home-backend .'
+        dir('Listygo-Prod') {
+          // build the image using the Dockerfile in Listygo-Prod/
+          sh 'docker build -t home-frontend .'
         }
       }
     }
@@ -48,19 +29,26 @@ pipeline {
     stage('Redeploy') {
       steps {
         sh '''
-          docker stop home-backend-1 || true
-          docker rm   home-backend-1 || true
+          # stop & remove old container if it exists
+          docker stop home-frontend-1 || true
+          docker rm   home-frontend-1 || true
+
+          # launch the new one on port 5173 → container’s 80
           docker run -d \
-            --name home-backend-1 \
-            -p 8000:3000 \
-            home-backend
+            --name home-frontend-1 \
+            -p 5173:80 \
+            home-frontend
         '''
       }
     }
   }
 
   post {
-    success { echo '✅ Deployment complete!' }
-    failure { echo '❌ Deployment failed – check the logs above.' }
+    success {
+      echo '✅ Frontend deployed successfully!'
+    }
+    failure {
+      echo '❌ Frontend deployment failed – check the console output above.'
+    }
   }
 }
