@@ -1,27 +1,20 @@
 pipeline {
   agent any
 
-  options {
-    // don’t do Jenkins’s default checkout (which might grab the wrong branch)
-    skipDefaultCheckout()
-  }
-
   stages {
-    stage('Checkout Listygo-Prod') {
+    stage('Checkout adi-be') {
       steps {
-        // clone only your prod branch into the Listygo-Prod folder
-        dir('Listygo-Prod') {
-          git branch: 'main',                                   // or 'prod' if you use a prod branch
-              url:    'https://github.com/Sarman-Keshwani/Listygo-Prod.git'
-        }
+        // Clone only the adi-be branch
+        git branch: 'adi-be',
+            url:   'https://github.com/Aditya-Garg10/Listygo.git'
       }
     }
 
     stage('Build Docker Image') {
       steps {
-        dir('Listygo-Prod') {
-          // build the image using the Dockerfile in Listygo-Prod/
-          sh 'docker build -t home-frontend .'
+        // Switch into the Listygo folder (where your Dockerfile is)
+        dir('Listygo') {
+          sh 'docker build -t home-backend .'
         }
       }
     }
@@ -29,15 +22,15 @@ pipeline {
     stage('Redeploy') {
       steps {
         sh '''
-          # stop & remove old container if it exists
-          docker stop home-frontend-1 || true
-          docker rm   home-frontend-1 || true
+          # Stop & remove old container (if any)
+          docker stop home-backend-1 || true
+          docker rm   home-backend-1 || true
 
-          # launch the new one on port 5173 → container’s 80
+          # Run new container
           docker run -d \
-            --name home-frontend-1 \
-            -p 5173:80 \
-            home-frontend
+            --name home-backend-1 \
+            -p 8000:3000 \
+            home-backend
         '''
       }
     }
@@ -45,10 +38,10 @@ pipeline {
 
   post {
     success {
-      echo '✅ Frontend deployed successfully!'
+      echo '✅ Deployment complete!'
     }
     failure {
-      echo '❌ Frontend deployment failed – check the console output above.'
+      echo '❌ Something went wrong. Check the console output above.'
     }
   }
 }
