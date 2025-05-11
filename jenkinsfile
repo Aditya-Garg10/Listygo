@@ -38,6 +38,7 @@ pipeline {
           docker run -d \
             --name home-backend-1 \
             -p 8000:3000 \
+            -v /path/on/host/firebase-credentials.json:/app/firebase-credentials.json \
             home-backend
         '''
       }
