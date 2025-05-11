@@ -4,51 +4,46 @@ pipeline {
   stages {
     stage('Checkout adi-be') {
       steps {
-        // Clone only the adi-be branch
+        // Clone the adi-be branch
         git branch: 'adi-be',
             url:   'https://github.com/Aditya-Garg10/Listygo.git'
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Build & Deploy') {
       steps {
-        // Switch into the Listygo folder (where your Dockerfile is)
         dir('Listygo') {
-          sh 'docker build --no-cache -t home-backend .'
+          sh '''
+            # 1) Tear down anything using port 8000
+            for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
+              docker stop $c || true
+              docker rm   $c || true
+            done
+
+            # 2) Also remove any old home-backend-1
+            docker stop home-backend-1 || true
+            docker rm   home-backend-1 || true
+
+            # 3) Build new image without cache
+            docker build --no-cache -t home-backend .
+
+            # 4) Run the fresh container
+            docker run -d \
+              --name home-backend-1 \
+              -p 8000:3000 \
+              home-backend
+          '''
         }
       }
     }
-
-    stage('Redeploy') {
-      steps {
-        sh '''
-          # 1) Tear down any container binding host port 8000
-          for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
-            docker stop $c || true
-            docker rm   $c || true
-          done
-
-          # 2) Also remove the old home-backend-1 if it existed
-          docker stop home-backend-1 || true
-          docker rm   home-backend-1 || true
-
-          # 3) Now you can start the fresh container
-          docker run -d \
-            --name home-backend-1 \
-            -p 8000:3000 \
-            home-backend
-        '''
-      }
-}
-
   }
 
   post {
     success {
-      echo '✅ Deployment complete!'
+      echo '✅ Deployment complete—your updated code is now live!'
     }
     failure {
-      echo '❌ Something went wrong. Check the console output above.'
+      echo '❌ Deployment failed. Check the logs above.'
     }
   }
 }

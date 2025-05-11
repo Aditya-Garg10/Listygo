@@ -56,7 +56,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('ListyGo API - Welcome to our listing service updated!');
+  res.send('ListyGo API - Welcome to our listing service updated 2!');
 });
 
 // Mount routers
