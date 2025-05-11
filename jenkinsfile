@@ -22,18 +22,25 @@ pipeline {
     stage('Redeploy') {
       steps {
         sh '''
-          # Stop & remove old container (if any)
+          # 1) Tear down any container binding host port 8000
+          for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
+            docker stop $c || true
+            docker rm   $c || true
+          done
+
+          # 2) Also remove the old home-backend-1 if it existed
           docker stop home-backend-1 || true
           docker rm   home-backend-1 || true
 
-          # Run new container
+          # 3) Now you can start the fresh container
           docker run -d \
             --name home-backend-1 \
             -p 8000:3000 \
             home-backend
         '''
       }
-    }
+}
+
   }
 
   post {
