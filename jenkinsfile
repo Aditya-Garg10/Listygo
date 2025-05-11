@@ -17,7 +17,7 @@ pipeline {
     stage('Inject Firebase Creds') {
       steps {
         // replace 'firebaseCredentials' with your managed-file ID
-        configFileProvider([configFile(fileId: 'firebaseCredentials', targetLocation: 'firebase-credentials.json')]) {
+        configFileProvider([configFile(fileId: 'firebase-cred-id', targetLocation: 'firebase-credentials.json')]) {
           // credentials now live at workspace/firebase-credentials.json
           echo "✔️ Injected firebase-credentials.json"
         }
