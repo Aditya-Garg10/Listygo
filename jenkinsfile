@@ -1,45 +1,70 @@
 pipeline {
   agent any
 
-  options { skipDefaultCheckout() }
+  options {
+    skipDefaultCheckout()
+  }
 
   stages {
     stage('Clean & Checkout') {
       steps {
         deleteDir()
-        git branch: 'adi-be', url: 'https://github.com/Aditya-Garg10/Listygo.git'
+        git branch: 'adi-be',
+            url:   'https://github.com/Aditya-Garg10/Listygo.git'
       }
     }
 
     stage('Inject Firebase Creds') {
       steps {
-        // replace 'firebase-cred-id' with your actual Managed File ID
-        configFileProvider([configFile(fileId: 'firebase-cred-id', targetLocation: 'firebase-credentials.json')]) {
-          sh '''
-            # Move it into the Listygo folder so COPY . . will include it
-            mkdir -p Listygo
-            mv firebase-credentials.json Listygo/firebase-credentials.json
-          '''
+        // replace 'firebaseCredentials' with your managed-file ID
+        configFileProvider([configFile(fileId: 'firebaseCredentials', targetLocation: 'firebase-credentials.json')]) {
+          // credentials now live at workspace/firebase-credentials.json
+          echo "✔️ Injected firebase-credentials.json"
         }
+      }
+    }
+
+    stage('Verify Workspace') {
+      steps {
+        sh '''
+          echo "── Workspace contents ──"
+          ls -al .
+          echo "──────────────────────"
+        '''
       }
     }
 
     stage('Build & Deploy') {
       steps {
-        dir('Listygo') {
-          sh '''
-            # free up port 8000
-            for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
-              docker stop $c; docker rm $c;
-            done
+        sh '''
+          # 1) Tear down any container binding port 8000
+          for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
+            docker stop $c || true
+            docker rm   $c || true
+          done
 
-            # build + run
-            docker build --no-cache -t home-backend .
-            docker rm -f home-backend-1 || true
-            docker run -d --name home-backend-1 -p 8000:3000 home-backend
-          '''
-        }
+          # 2) Remove old home-backend-1 if present
+          docker rm -f home-backend-1 || true
+
+          # 3) Build new image WITHOUT cache
+          docker build --no-cache -t home-backend .
+
+          # 4) Run the fresh container
+          docker run -d \
+            --name home-backend-1 \
+            -p 8000:3000 \
+            home-backend
+        '''
       }
+    }
+  }
+
+  post {
+    success {
+      echo '✅ Deployment complete—your updated code is now live!'
+    }
+    failure {
+      echo '❌ Deployment failed. Check the logs above.'
     }
   }
 }
