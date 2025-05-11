@@ -1,20 +1,17 @@
-# Use official Node.js image from Docker Hub
-FROM node:18
+# Use official Node.js image
+FROM node:18-alpine
 
-# Set working directory to /src
-WORKDIR /usr/src/app
+# 1. Pick a clear working directory
+WORKDIR /app
 
-# Copy package.json and package-lock.json (if it exists)
+# 2. Copy only package manifests, install deps (caches unless package.json changes)
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the backend code to the container
+# 3. Copy everything else (your index.js is at the project root, so it goes into /app)
 COPY . .
 
-# Expose port 8000 to access the backend app
+# 4. Expose and start
 EXPOSE 8000
-
-# Run the backend app
+# Make sure your package.json has "start": "node index.js"
 CMD ["npm", "start"]
