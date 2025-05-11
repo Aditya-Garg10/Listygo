@@ -14,7 +14,7 @@ pipeline {
       steps {
         // Switch into the Listygo folder (where your Dockerfile is)
         dir('Listygo') {
-          sh 'docker build -t home-backend .'
+          sh 'docker build --no-cache -t home-backend .'
         }
       }
     }
