@@ -1,12 +1,37 @@
 pipeline {
   agent any
 
+  options {
+    // Don’t inherit any previous checkouts—start fresh
+    skipDefaultCheckout()
+  }
+
   stages {
+    stage('Clean workspace') {
+      steps {
+        // Deletes everything in the current workspace
+        deleteDir()
+      }
+    }
+
     stage('Checkout adi-be') {
       steps {
-        // Clone the adi-be branch
+        // Clone exactly the state of adi-be
         git branch: 'adi-be',
             url:   'https://github.com/Aditya-Garg10/Listygo.git'
+      }
+    }
+
+    stage('Verify code') {
+      steps {
+        dir('Listygo') {
+          // Show us your index.js so we know Jenkins sees the update
+          sh '''
+            echo "---- index.js start ----"
+            head -n 20 index.js || true
+            echo "---- index.js end ----"
+          '''
+        }
       }
     }
 
@@ -20,14 +45,14 @@ pipeline {
               docker rm   $c || true
             done
 
-            # 2) Also remove any old home-backend-1
+            # 2) Remove old home-backend-1 if present
             docker stop home-backend-1 || true
             docker rm   home-backend-1 || true
 
-            # 3) Build new image without cache
+            # 3) Build fresh image
             docker build --no-cache -t home-backend .
 
-            # 4) Run the fresh container
+            # 4) Run the new container
             docker run -d \
               --name home-backend-1 \
               -p 8000:3000 \
@@ -40,10 +65,10 @@ pipeline {
 
   post {
     success {
-      echo '✅ Deployment complete—your updated code is now live!'
+      echo '✅ Deployment complete—new code is live!'
     }
     failure {
-      echo '❌ Deployment failed. Check the logs above.'
+      echo '❌ Deployment failed. See errors above.'
     }
   }
 }
