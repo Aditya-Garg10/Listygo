@@ -1,5 +1,12 @@
 pipeline {
-  agent { label 'docker' }               // runs all stages on a node with Docker CLI installed
+  agent any
+
+  environment {
+    IMAGE_NAME      = "home-backend"
+    CONTAINER_NAME  = "home-backend-1"
+    HTTP_PORT       = "8000"
+    APP_PORT        = "3000"
+  }
 
   options {
     skipDefaultCheckout()
@@ -9,7 +16,6 @@ pipeline {
     stage('Clean & Checkout') {
       steps {
         deleteDir()
-        // checkout the adi-be branch
         checkout([
           $class: 'GitSCM',
           branches: [[name: 'origin/adi-be']],
@@ -20,8 +26,10 @@ pipeline {
 
     stage('Inject Firebase Creds') {
       steps {
-        // inject your managed firebase-credentials.json
-        configFileProvider([configFile(fileId: 'firebase-cred-id', targetLocation: 'firebase-credentials.json')]) {
+        configFileProvider([configFile(
+          fileId: 'firebase-cred-id',                // ← replace with your Config File ID
+          targetLocation: 'firebase-credentials.json'
+        )]) {
           echo "✔️ Injected firebase-credentials.json"
         }
       }
@@ -37,34 +45,41 @@ pipeline {
       }
     }
 
-    stage('Build & Deploy') {
+    stage('Build Docker Image') {
       steps {
-        sh '''
-          # 1) Stop & remove any container on port 8000
-          docker ps --filter "publish=8000" --format "{{.ID}}" \
-            | xargs -r docker stop \
-            && docker ps --filter "publish=8000" --format "{{.ID}}" \
-            | xargs -r docker rm
+        script {
+          echo "🔨 Building Docker image: ${IMAGE_NAME}:${env.BUILD_NUMBER}"
+          // uses Docker Pipeline plugin
+          def img = docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}")
+          // optional: tag “latest”
+          img.push("latest")
+        }
+      }
+    }
 
-          # 2) Remove old instance if still around
-          docker rm -f home-backend-1 || true
-
-          # 3) Build the new image (no cache)
-          docker build --no-cache -t home-backend .
-
-          # 4) Spin up the container
-          docker run -d \
-            --name home-backend-1 \
-            -p 8000:3000 \
-            home-backend
-        '''
+    stage('Deploy Container') {
+      steps {
+        script {
+          // stop & remove any old container
+          sh """
+            docker stop ${CONTAINER_NAME} || true
+            docker rm   ${CONTAINER_NAME} || true
+          """
+          // run the fresh container
+          sh """
+            docker run -d \
+              --name ${CONTAINER_NAME} \
+              -p ${HTTP_PORT}:${APP_PORT} \
+              ${IMAGE_NAME}:${env.BUILD_NUMBER}
+          """
+        }
       }
     }
   }
 
   post {
     success {
-      echo '✅ Deployment complete—your updated code is now live!'
+      echo '✅ Deployment succeeded – your app is live!'
     }
     failure {
       echo '❌ Deployment failed. Check the logs above.'
