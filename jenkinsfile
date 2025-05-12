@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent { label 'docker' }               // runs all stages on a node with Docker CLI installed
 
   options {
     skipDefaultCheckout()
@@ -9,14 +9,18 @@ pipeline {
     stage('Clean & Checkout') {
       steps {
         deleteDir()
-        git branch: 'adi-be',
-            url:   'https://github.com/Aditya-Garg10/Listygo.git'
+        // checkout the adi-be branch
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: 'origin/adi-be']],
+          userRemoteConfigs: [[url: 'https://github.com/Aditya-Garg10/Listygo.git']]
+        ])
       }
     }
 
     stage('Inject Firebase Creds') {
       steps {
-        // replace 'firebase-cred-id' with your managed-file ID
+        // inject your managed firebase-credentials.json
         configFileProvider([configFile(fileId: 'firebase-cred-id', targetLocation: 'firebase-credentials.json')]) {
           echo "✔️ Injected firebase-credentials.json"
         }
@@ -34,38 +38,28 @@ pipeline {
     }
 
     stage('Build & Deploy') {
-  agent {
-    docker {
-      image 'docker:24-dind'                       // official Docker+DinD image
-      args  '-v /var/run/docker.sock:/var/run/docker.sock'
+      steps {
+        sh '''
+          # 1) Stop & remove any container on port 8000
+          docker ps --filter "publish=8000" --format "{{.ID}}" \
+            | xargs -r docker stop \
+            && docker ps --filter "publish=8000" --format "{{.ID}}" \
+            | xargs -r docker rm
+
+          # 2) Remove old instance if still around
+          docker rm -f home-backend-1 || true
+
+          # 3) Build the new image (no cache)
+          docker build --no-cache -t home-backend .
+
+          # 4) Spin up the container
+          docker run -d \
+            --name home-backend-1 \
+            -p 8000:3000 \
+            home-backend
+        '''
+      }
     }
-  }
-  environment {
-    DOCKER_HOST = 'tcp://localhost:2375'           // point CLI at the DinD daemon
-  }
-  steps {
-    sh '''
-      # 1) Stop & remove any container binding port 8000
-      for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
-        docker stop $c || true
-        docker rm   $c || true
-      done
-
-      # 2) Remove old home-backend-1 if present
-      docker rm -f home-backend-1 || true
-
-      # 3) Build new image WITHOUT cache
-      docker build --no-cache -t home-backend .
-
-      # 4) Run the fresh container
-      docker run -d \
-        --name home-backend-1 \
-        -p 8000:3000 \
-        home-backend
-    '''
-  }
-}
-
   }
 
   post {
