@@ -34,29 +34,38 @@ pipeline {
     }
 
     stage('Build & Deploy') {
-      agent { label 'docker' }   // <— now correctly inside this stage
-      steps {
-        sh '''
-          # 1) Stop & remove any container binding port 8000
-          for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
-            docker stop $c || true
-            docker rm   $c || true
-          done
-
-          # 2) Remove old home-backend-1 if present
-          docker rm -f home-backend-1 || true
-
-          # 3) Build new image WITHOUT cache
-          docker build --no-cache -t home-backend .
-
-          # 4) Run the fresh container
-          docker run -d \
-            --name home-backend-1 \
-            -p 8000:3000 \
-            home-backend
-        '''
-      }
+  agent {
+    docker {
+      image 'docker:24-dind'                       // official Docker+DinD image
+      args  '-v /var/run/docker.sock:/var/run/docker.sock'
     }
+  }
+  environment {
+    DOCKER_HOST = 'tcp://localhost:2375'           // point CLI at the DinD daemon
+  }
+  steps {
+    sh '''
+      # 1) Stop & remove any container binding port 8000
+      for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
+        docker stop $c || true
+        docker rm   $c || true
+      done
+
+      # 2) Remove old home-backend-1 if present
+      docker rm -f home-backend-1 || true
+
+      # 3) Build new image WITHOUT cache
+      docker build --no-cache -t home-backend .
+
+      # 4) Run the fresh container
+      docker run -d \
+        --name home-backend-1 \
+        -p 8000:3000 \
+        home-backend
+    '''
+  }
+}
+
   }
 
   post {
