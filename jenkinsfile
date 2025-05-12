@@ -1,13 +1,6 @@
 pipeline {
   agent any
 
-  environment {
-    IMAGE_NAME      = "home-backend"
-    CONTAINER_NAME  = "home-backend-1"
-    HTTP_PORT       = "8000"
-    APP_PORT        = "3000"
-  }
-
   options {
     skipDefaultCheckout()
   }
@@ -16,20 +9,16 @@ pipeline {
     stage('Clean & Checkout') {
       steps {
         deleteDir()
-        checkout([
-          $class: 'GitSCM',
-          branches: [[name: 'origin/adi-be']],
-          userRemoteConfigs: [[url: 'https://github.com/Aditya-Garg10/Listygo.git']]
-        ])
+        git branch: 'adi-be',
+            url:   'https://github.com/Aditya-Garg10/Listygo.git'
       }
     }
 
     stage('Inject Firebase Creds') {
       steps {
-        configFileProvider([configFile(
-          fileId: 'firebase-cred-id',                // ← replace with your Config File ID
-          targetLocation: 'firebase-credentials.json'
-        )]) {
+        // replace 'firebaseCredentials' with your managed-file ID
+        configFileProvider([configFile(fileId: 'firebase-cred-id', targetLocation: 'firebase-credentials.json')]) {
+          // credentials now live at workspace/firebase-credentials.json
           echo "✔️ Injected firebase-credentials.json"
         }
       }
@@ -45,41 +34,34 @@ pipeline {
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Build & Deploy') {
       steps {
-        script {
-          echo "🔨 Building Docker image: ${IMAGE_NAME}:${env.BUILD_NUMBER}"
-          // uses Docker Pipeline plugin
-          def img = docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}")
-          // optional: tag “latest”
-          img.push("latest")
-        }
-      }
-    }
+        sh '''
+          # 1) Tear down any container binding port 8000
+          for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
+            docker stop $c || true
+            docker rm   $c || true
+          done
 
-    stage('Deploy Container') {
-      steps {
-        script {
-          // stop & remove any old container
-          sh """
-            docker stop ${CONTAINER_NAME} || true
-            docker rm   ${CONTAINER_NAME} || true
-          """
-          // run the fresh container
-          sh """
-            docker run -d \
-              --name ${CONTAINER_NAME} \
-              -p ${HTTP_PORT}:${APP_PORT} \
-              ${IMAGE_NAME}:${env.BUILD_NUMBER}
-          """
-        }
+          # 2) Remove old home-backend-1 if present
+          docker rm -f home-backend-1 || true
+
+          # 3) Build new image WITHOUT cache
+          docker build --no-cache -t home-backend .
+
+          # 4) Run the fresh container
+          docker run -d \
+            --name home-backend-1 \
+            -p 8000:3000 \
+            home-backend
+        '''
       }
     }
   }
 
   post {
     success {
-      echo '✅ Deployment succeeded – your app is live!'
+      echo '✅ Deployment complete—your updated code is now live!'
     }
     failure {
       echo '❌ Deployment failed. Check the logs above.'
