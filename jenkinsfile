@@ -16,9 +16,8 @@ pipeline {
 
     stage('Inject Firebase Creds') {
       steps {
-        // replace 'firebaseCredentials' with your managed-file ID
+        // replace 'firebase-cred-id' with your managed-file ID
         configFileProvider([configFile(fileId: 'firebase-cred-id', targetLocation: 'firebase-credentials.json')]) {
-          // credentials now live at workspace/firebase-credentials.json
           echo "✔️ Injected firebase-credentials.json"
         }
       }
@@ -34,11 +33,11 @@ pipeline {
       }
     }
 
-    agent { label 'docker' }      
     stage('Build & Deploy') {
+      agent { label 'docker' }   // <— now correctly inside this stage
       steps {
         sh '''
-          # 1) Tear down any container binding port 8000
+          # 1) Stop & remove any container binding port 8000
           for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
             docker stop $c || true
             docker rm   $c || true
