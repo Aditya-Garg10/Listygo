@@ -23,6 +23,13 @@ pipeline {
         }
       }
     }
+    stage('Inject ENV file') {
+      steps {
+        configFileProvider([configFile(fileId: 'listygo-env', targetLocation: 'Listygo ENV')]) {
+          echo "✔️ Injected .env file at workspace"
+        }
+      }
+    }
 
     stage('Verify Workspace') {
       steps {
