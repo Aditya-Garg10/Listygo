@@ -48,14 +48,6 @@ pipeline {
     }
 
     stage('Build & Deploy') {
-      // run everything inside a container that has `docker` available
-      agent {
-        docker {
-          image 'docker:24-dind'             // official Docker-in-Docker image
-          args  '--privileged ' +
-                '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-      }
       steps {
         sh '''
           # 1) Stop & remove any containers binding port 8000
