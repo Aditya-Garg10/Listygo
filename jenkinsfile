@@ -1,39 +1,81 @@
 pipeline {
   agent any
 
+  options {
+    // we’ll do our own checkout, so skip the default
+    skipDefaultCheckout()
+  }
+
   stages {
-    stage('Checkout adi-be') {
+    stage('Clean & Checkout') {
       steps {
-        // Clone the adi-be branch
+        deleteDir()
         git branch: 'adi-be',
             url:   'https://github.com/Aditya-Garg10/Listygo.git'
       }
     }
 
-    stage('Build & Deploy') {
+    stage('Inject Firebase Creds') {
       steps {
-        dir('Listygo') {
-          sh '''
-            # 1) Tear down anything using port 8000
-            for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
-              docker stop $c || true
-              docker rm   $c || true
-            done
-
-            # 2) Also remove any old home-backend-1
-            docker stop home-backend-1 || true
-            docker rm   home-backend-1 || true
-
-            # 3) Build new image without cache
-            docker build --no-cache -t home-backend .
-
-            # 4) Run the fresh container
-            docker run -d \
-              --name home-backend-1 \
-              -p 8000:3000 \
-              home-backend
-          '''
+        configFileProvider([configFile(
+          fileId: 'firebaseCredentials',      // your managed-file ID
+          targetLocation: 'firebase-credentials.json'
+        )]) {
+          echo "✔️ Injected firebase-credentials.json"
         }
+      }
+    }
+
+    stage('Inject ENV file') {
+      steps {
+        configFileProvider([configFile(
+          fileId: 'listygo-env',              // your managed-file ID
+          targetLocation: 'Listygo ENV'
+        )]) {
+          echo "✔️ Injected .env file at workspace"
+        }
+      }
+    }
+
+    stage('Verify Workspace') {
+      steps {
+        sh '''
+          echo "── Workspace contents ──"
+          ls -al .
+          echo "──────────────────────"
+        '''
+      }
+    }
+
+    stage('Build & Deploy') {
+      // run everything inside a container that has `docker` available
+      agent {
+        docker {
+          image 'docker:24-dind'             // official Docker-in-Docker image
+          args  '--privileged ' +
+                '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+      }
+      steps {
+        sh '''
+          # 1) Stop & remove any containers binding port 8000
+          for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
+            docker stop $c || true
+            docker rm   $c || true
+          done
+
+          # 2) Remove any old home-backend-1 by name
+          docker rm -f home-backend-1 || true
+
+          # 3) Build fresh image
+          docker build --no-cache -t home-backend .
+
+          # 4) Run it
+          docker run -d \
+            --name home-backend-1 \
+            -p 8000:3000 \
+            home-backend
+        '''
       }
     }
   }
