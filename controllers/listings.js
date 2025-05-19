@@ -5,7 +5,36 @@ const ErrorResponse = require('../utils/errorResponse');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const admin = require('../config/firebase');
+
+// Configure storage directory
+const UPLOADS_DIR = 'public/uploads/listings';
+
+// Ensure uploads directory exists
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, UPLOADS_DIR);
+  },
+  filename: function(req, file, cb) {
+    cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`);
+  }
+});
+
+const fileFilter = function(req, file, cb) {
+  const filetypes = /jpeg|jpg|png|webp/;
+  const mimetype = filetypes.test(file.mimetype);
+  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only .jpeg, .jpg, .png and .webp files are allowed'));
+  }
+};
 
 // @desc    Get all listings
 // @route   GET /api/listings
@@ -98,7 +127,7 @@ exports.getListings = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     count: listings.length,
-    totalCount: total, // Add this line to return total count
+    totalCount: total,
     pagination,
     data: listings
   });
@@ -126,36 +155,10 @@ exports.getListing = asyncHandler(async (req, res, next) => {
 // @route   POST /api/listings
 // @access  Private
 exports.createListing = asyncHandler(async (req, res, next) => {
-  // Configure multer for file uploads
-  const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
-      const uploadDir = 'tmp/uploads/';
-      // Create directory if it doesn't exist
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      cb(null, uploadDir);
-    },
-    
-    filename: function(req, file, cb) {
-      cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`);
-    }
-  });
-
   const upload = multer({
     storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 5MB file size limit
-    fileFilter: function(req, file, cb) {
-      const filetypes = /jpeg|jpg|png|webp/;
-      const mimetype = filetypes.test(file.mimetype);
-      const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-      
-      if (mimetype && extname) {
-        return cb(null, true);
-      } else {
-        cb(new Error('Only .jpeg, .jpg, .png and .webp files are allowed'));
-      }
-    }
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB file size limit
+    fileFilter: fileFilter
   }).array('images', 5); // Allow up to 5 images
 
   upload(req, res, async function(err) {
@@ -168,13 +171,12 @@ exports.createListing = asyncHandler(async (req, res, next) => {
     try {
       // Add user to req.body
       req.body.addedBy = req.user.id;
-
-      // Log received data for debugging, especially locationLink
+      
       console.log('Creating listing with locationLink:', req.body.locationLink);
 
       // Ensure the locationLink field is handled properly
       if (req.body.locationLink === '') {
-        req.body.locationLink = null; // Consistent handling of empty strings
+        req.body.locationLink = null;
       }
 
       // Check if category exists
@@ -191,34 +193,10 @@ exports.createListing = asyncHandler(async (req, res, next) => {
       // Process images if they were uploaded
       let imageUrls = [];
       if (req.files && req.files.length > 0) {
-        imageUrls = await Promise.all(
-          req.files.map(async (file) => {
-            try {
-              const bucket = admin.storage().bucket();
-              
-              const uploadResponse = await bucket.upload(file.path, {
-                destination: `listings/${file.filename}`,
-                metadata: {
-                  contentType: file.mimetype,
-                },
-              });
-              
-              // Get public URL
-              const fileUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent('listings/' + file.filename)}?alt=media`;
-              
-              // Delete the temporary file
-              fs.unlinkSync(file.path);
-              
-              return fileUrl;
-            } catch (error) {
-              // Cleanup if upload fails
-              if (fs.existsSync(file.path)) {
-                fs.unlinkSync(file.path);
-              }
-              throw error;
-            }
-          })
-        );
+        // Generate URLs for each uploaded image using local storage
+        imageUrls = req.files.map(file => {
+          return `${req.protocol}://${req.get('host')}/uploads/listings/${file.filename}`;
+        });
 
         // Add image URLs to req.body
         req.body.images = imageUrls;
@@ -226,7 +204,6 @@ exports.createListing = asyncHandler(async (req, res, next) => {
 
       const listing = await Listing.create(req.body);
       
-      // Log the created listing to verify locationLink was saved
       console.log('Created listing with locationLink:', listing.locationLink);
 
       res.status(201).json({
@@ -235,6 +212,16 @@ exports.createListing = asyncHandler(async (req, res, next) => {
       });
     } catch (error) {
       console.error('Error creating listing:', error);
+      
+      // Clean up any uploaded files if there was an error
+      if (req.files) {
+        req.files.forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      }
+      
       return next(new ErrorResponse(`Failed to create listing: ${error.message}`, 500));
     }
   });
@@ -244,35 +231,10 @@ exports.createListing = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/listings/:id
 // @access  Private
 exports.updateListing = asyncHandler(async (req, res, next) => {
-  // Configure multer for file uploads
-  const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
-      const uploadDir = 'tmp/uploads/';
-      // Create directory if it doesn't exist
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      cb(null, uploadDir);
-    },
-    filename: function(req, file, cb) {
-      cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`);
-    }
-  });
-
   const upload = multer({
     storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 5MB file size limit
-    fileFilter: function(req, file, cb) {
-      const filetypes = /jpeg|jpg|png|webp/;
-      const mimetype = filetypes.test(file.mimetype);
-      const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-      
-      if (mimetype && extname) {
-        return cb(null, true);
-      } else {
-        cb(new Error('Only .jpeg, .jpg, .png and .webp files are allowed'));
-      }
-    }
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB file size limit
+    fileFilter: fileFilter
   }).array('images', 5); // Allow up to 5 images
 
   upload(req, res, async function(err) {
@@ -310,9 +272,6 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
       console.log('⭐ locationLink received:', req.body.locationLink);
       
       // Explicitly handle the locationLink field
-      console.log('Processing locationLink for update:', req.body.locationLink);
-      
-      // Set empty string to null for consistency
       if (req.body.locationLink === '') {
         req.body.locationLink = null;
       }
@@ -320,12 +279,51 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
       // Make sure locationLink is included in the update data
       const updateData = { ...req.body };
 
+      // Process images if they were uploaded
+      if (req.files && req.files.length > 0) {
+        // Generate URLs for each uploaded image
+        const newImageUrls = req.files.map(file => {
+          return `${req.protocol}://${req.get('host')}/uploads/listings/${file.filename}`;
+        });
+
+        // If replaceImages flag is set, replace all images
+        if (req.body.replaceImages === 'true') {
+          updateData.images = newImageUrls;
+        } else {
+          // Otherwise append new images to existing ones
+          const existingImages = listing.images || [];
+          updateData.images = [...existingImages, ...newImageUrls];
+        }
+      }
+
+      // If imageUrls are provided (from frontend), merge them with existing
+      if (req.body.imageUrls) {
+        try {
+          // Parse imageUrls if it's a string
+          const parsedUrls = typeof req.body.imageUrls === 'string' 
+            ? JSON.parse(req.body.imageUrls) 
+            : req.body.imageUrls;
+          
+          if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
+            // If we're not replacing all images and have new uploads too
+            if (req.body.replaceImages !== 'true') {
+              const existingImages = updateData.images || listing.images || [];
+              updateData.images = [...existingImages, ...parsedUrls];
+            } else {
+              // We're replacing all images
+              updateData.images = parsedUrls;
+            }
+          }
+        } catch (err) {
+          console.error('Error parsing imageUrls:', err);
+        }
+      }
+
       listing = await Listing.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
         runValidators: true
       });
 
-      // Log the updated listing to verify locationLink was saved
       console.log('Updated listing with locationLink:', listing.locationLink);
 
       res.status(200).json({
@@ -334,6 +332,16 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
       });
     } catch (error) {
       console.error('Error updating listing:', error.stack || error.message || error);
+      
+      // Clean up any uploaded files if there was an error
+      if (req.files) {
+        req.files.forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      }
+      
       return next(new ErrorResponse(`Failed to update listing: ${error.message}`, 500));
     }
   });
@@ -342,24 +350,42 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
 // @desc    Delete listing
 // @route   DELETE /api/listings/:id
 // @access  Private
-// @desc    Delete listing
-// @route   DELETE /api/listings/:id
-// @access  Private
 exports.deleteListing = asyncHandler(async (req, res, next) => {
-  const deleted = await Listing.findByIdAndDelete(req.params.id);
+  const listing = await Listing.findById(req.params.id);
 
-  if (!deleted) {
+  if (!listing) {
     return next(
       new ErrorResponse(`Listing not found with id of ${req.params.id}`, 404)
     );
   }
+  
+  // Delete associated image files
+  if (listing.images && listing.images.length > 0) {
+    listing.images.forEach(imageUrl => {
+      try {
+        // Extract filename from URL
+        const filename = imageUrl.split('/').pop();
+        const imagePath = path.join(UPLOADS_DIR, filename);
+        
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+          console.log(`Deleted image file: ${imagePath}`);
+        }
+      } catch (err) {
+        console.error(`Failed to delete image file: ${err.message}`);
+        // Continue with deletion even if file removal fails
+      }
+    });
+  }
+
+  // Delete the listing document
+  await listing.deleteOne();
 
   res.status(200).json({
     success: true,
     data: {}
   });
 });
-
 
 // @desc    Get listings by category
 // @route   GET /api/listings/category/:categoryId
@@ -406,8 +432,6 @@ exports.getFeaturedListings = asyncHandler(async (req, res, next) => {
   });
 });
 
-// Add this function to your listings controller
-
 // @desc    Delete a specific image from a listing
 // @route   DELETE /api/listings/:id/images
 // @access  Private
@@ -451,27 +475,19 @@ exports.deleteListingImage = asyncHandler(async (req, res, next) => {
   }
   
   try {
-    // Delete from Firebase Storage if it's a Firebase URL
-    if (imageUrl.includes('firebasestorage.googleapis.com')) {
-      // Extract the file path from the URL
-      const bucket = admin.storage().bucket();
+    // Delete the local file if possible
+    try {
+      // Extract filename from URL
+      const filename = imageUrl.split('/').pop();
+      const imagePath = path.join(UPLOADS_DIR, filename);
       
-      // Parse the URL to get the file path
-      // Example URL format: https://firebasestorage.googleapis.com/v0/b/bucket-name/o/listings%2Ffilename.jpg?alt=media
-      const urlPath = decodeURIComponent(imageUrl.split('/o/')[1].split('?')[0]);
-      
-      console.log(`Attempting to delete file at path: ${urlPath}`);
-      
-      // Delete the file from Firebase Storage
-      await bucket.file(urlPath).delete()
-        .then(() => {
-          console.log(`Successfully deleted file: ${urlPath}`);
-        })
-        .catch((error) => {
-          console.error(`Error deleting file from Firebase: ${error.message}`);
-          // We continue even if Firebase deletion fails
-          // This ensures the URL is at least removed from the database
-        });
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+        console.log(`Deleted image file: ${imagePath}`);
+      }
+    } catch (err) {
+      console.error(`Failed to delete image file: ${err.message}`);
+      // Continue even if file deletion fails
     }
     
     // Remove the image from the database entry
