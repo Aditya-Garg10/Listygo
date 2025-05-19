@@ -136,6 +136,7 @@ exports.createListing = asyncHandler(async (req, res, next) => {
       }
       cb(null, uploadDir);
     },
+    
     filename: function(req, file, cb) {
       cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`);
     }
@@ -143,7 +144,7 @@ exports.createListing = asyncHandler(async (req, res, next) => {
 
   const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+    limits: { fileSize: 50 * 1024 * 1024 }, // 5MB file size limit
     fileFilter: function(req, file, cb) {
       const filetypes = /jpeg|jpg|png|webp/;
       const mimetype = filetypes.test(file.mimetype);
@@ -260,7 +261,7 @@ exports.updateListing = asyncHandler(async (req, res, next) => {
 
   const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+    limits: { fileSize: 50 * 1024 * 1024 }, // 5MB file size limit
     fileFilter: function(req, file, cb) {
       const filetypes = /jpeg|jpg|png|webp/;
       const mimetype = filetypes.test(file.mimetype);
