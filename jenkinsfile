@@ -30,7 +30,7 @@ pipeline {
       steps {
         configFileProvider([configFile(
           fileId: 'listygo-env',              // your managed-file ID
-          targetLocation: 'Listygo ENV'
+          targetLocation: '.env'
         )]) {
           echo "✔️ Injected .env file at workspace"
         }
