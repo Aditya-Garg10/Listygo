@@ -1,20 +1,20 @@
-# Use official Node.js image from Docker Hub
-FROM node:18
+# 1. Use a lightweight Node.js base
+FROM node:18-alpine
+WORKDIR /app
 
-# Set working directory to /src
-WORKDIR /
-
-# Copy package.json and package-lock.json (if it exists)
+# 2. Install dependencies
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm install
+# 3. Copy Firebase creds into the image
+COPY firebase-credentials.json ./
 
-# Copy the rest of the backend code to the container
+# 4. Copy application source
 COPY . .
 
-# Expose port 8000 to access the backend app
-EXPOSE 8000
+# 5. Tell any client libraries where to find your credentials
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-credentials.json
 
-# Run the backend app
+# 6. Expose & run
+EXPOSE 8000
 CMD ["npm", "start"]

@@ -1,32 +1,68 @@
 pipeline {
   agent any
 
+  options {
+    // we’ll do our own checkout, so skip the default
+    skipDefaultCheckout()
+  }
+
   stages {
-    stage('Checkout adi-be') {
+    stage('Clean & Checkout') {
       steps {
-        // Clone only the adi-be branch
+        deleteDir()
         git branch: 'adi-be',
             url:   'https://github.com/Aditya-Garg10/Listygo.git'
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Inject Firebase Creds') {
       steps {
-        // Switch into the Listygo folder (where your Dockerfile is)
-        dir('Listygo') {
-          sh 'docker build -t home-backend .'
+        configFileProvider([configFile(
+          fileId: 'firebaseCredentials',      // your managed-file ID
+          targetLocation: 'firebase-credentials.json'
+        )]) {
+          echo "✔️ Injected firebase-credentials.json"
         }
       }
     }
 
-    stage('Redeploy') {
+    stage('Inject ENV file') {
+      steps {
+        configFileProvider([configFile(
+          fileId: 'listygo-env',              // your managed-file ID
+          targetLocation: 'Listygo ENV'
+        )]) {
+          echo "✔️ Injected .env file at workspace"
+        }
+      }
+    }
+
+    stage('Verify Workspace') {
       steps {
         sh '''
-          # Stop & remove old container (if any)
-          docker stop home-backend-1 || true
-          docker rm   home-backend-1 || true
+          echo "── Workspace contents ──"
+          ls -al .
+          echo "──────────────────────"
+        '''
+      }
+    }
 
-          # Run new container
+    stage('Build & Deploy') {
+      steps {
+        sh '''
+          # 1) Stop & remove any containers binding port 8000
+          for c in $(docker ps --filter "publish=8000" --format "{{.ID}}"); do
+            docker stop $c || true
+            docker rm   $c || true
+          done
+
+          # 2) Remove any old home-backend-1 by name
+          docker rm -f home-backend-1 || true
+
+          # 3) Build fresh image
+          docker build --no-cache -t home-backend .
+
+          # 4) Run it
           docker run -d \
             --name home-backend-1 \
             -p 8000:3000 \
@@ -38,10 +74,10 @@ pipeline {
 
   post {
     success {
-      echo '✅ Deployment complete!'
+      echo '✅ Deployment complete—your updated code is now live!'
     }
     failure {
-      echo '❌ Something went wrong. Check the console output above.'
+      echo '❌ Deployment failed. Check the logs above.'
     }
   }
 }
