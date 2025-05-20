@@ -3,13 +3,13 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
-const path = require('path'); // Add this if not already imported
+const path = require('path');
 const errorHandler = require('./middleware/error');
 const adminRoutes = require('./routes/admin');
 const listingsRoutes = require('./routes/listings');
 const categoriesRoutes = require('./routes/categories');
 const userRoutes = require('./routes/users');
-const layoutRoutes = require('./routes/layout'); // Add layout routes
+const layoutRoutes = require('./routes/layout');
 
 // Load env vars
 dotenv.config();
@@ -36,19 +36,13 @@ app.use(cookieParser());
 
 // Enable CORS
 app.use(cors({
-  origin: ["https://listygo-fe-two.vercel.app", "https://pathsuchi.com", "http://localhost:5173"], // Updated to accept multiple origins
+  origin: ["https://listygo-fe-two.vercel.app", "https://pathsuchi.com", "http://localhost:5173"],
   credentials: true
 }));
 
-// Create tmp/uploads directory if it doesn't exist
-const fs = require('fs');
-const uploadsDir = path.join(__dirname, 'tmp/uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Serve static files from tmp/uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'tmp/uploads')));
+// Serve static files - fix the path to match the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);

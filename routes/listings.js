@@ -8,7 +8,9 @@ const {
   updateListing,
   deleteListing,
   getListingsByCategory,
-  getFeaturedListings
+  getFeaturedListings,
+  deleteListingImage,
+  deduplicateImages
 } = require('../controllers/listings');
 
 // Standard routes
@@ -20,6 +22,16 @@ router.route('/:id')
   .get(getListing)
   .put(protect, authorize('admin', 'super-admin'), updateListing)
   .delete(protect, authorize('admin', 'super-admin'), deleteListing);
+
+// Image-specific endpoints
+router.route('/:id/images')
+  .delete(protect, authorize('admin', 'super-admin'), deleteListingImage);
+
+router.route('/:id/deduplicate-images')
+  .post(protect, authorize('admin', 'super-admin'), deduplicateImages);
+
+router.route('/deduplicate-all-images')
+  .post(protect, authorize('admin', 'super-admin'), deduplicateImages);
 
 // Special routes - put these after the /:id routes to prevent conflicts
 router.route('/category/:categoryId').get(getListingsByCategory);
